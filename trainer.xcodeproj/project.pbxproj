@@ -1,0 +1,541 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2C6773732EF825F800C4D621 /* FIT in Frameworks */ = {isa = PBXBuildFile; productRef = 2C6773722EF825F800C4D621 /* FIT */; };
+		2CD6881B2ED93DD200AACE22 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CD6881A2ED93DD200AACE22 /* XCTest.framework */; platformFilter = ios; };
+		2CD688812EDCF10B00AACE22 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CD688802EDCF10B00AACE22 /* CoreBluetooth.framework */; };
+		2CD688832EDCF14C00AACE22 /* FileProvider.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CD688822EDCF14C00AACE22 /* FileProvider.framework */; };
+		2CD688842EDCF18500AACE23 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CD688842EDCF18500AACE22 /* libsqlite3.tbd */; };
+		2CFAEDEB2F8C79360040DF4D /* libfitness.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2CFAEDEA2F8C79360040DF4D /* libfitness.xcframework */; };
+		2CFAEDEC2F8C79360040DF4D /* libfitness.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2CFAEDEA2F8C79360040DF4D /* libfitness.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2CD688132ED93DAB00AACE22 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2CD687632ED7C2D800AACE22 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2CD6876A2ED7C2D800AACE22;
+			remoteInfo = mobile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2CFAEDED2F8C79360040DF4D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				2CFAEDEC2F8C79360040DF4D /* libfitness.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2CD6876B2ED7C2D800AACE22 /* trainer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = trainer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CD6880D2ED93DAB00AACE22 /* trainerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = trainerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CD6881A2ED93DD200AACE22 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		2CD688802EDCF10B00AACE22 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		2CD688822EDCF14C00AACE22 /* FileProvider.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FileProvider.framework; path = System/Library/Frameworks/FileProvider.framework; sourceTree = SDKROOT; };
+		2CD688842EDCF18500AACE22 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		2CD688852EDCF20E00AACE22 /* fit.sdk-21.141.00 */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "fit.sdk-21.141.00"; path = "sdk/fit.sdk-21.141.00"; sourceTree = "<group>"; };
+		2CFAEDEA2F8C79360040DF4D /* libfitness.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = libfitness.xcframework; path = sdk/libfitness.xcframework; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2CF8BF632FCD27AB0008BEB0 /* Exceptions for "trainer" folder in "trainer" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2CD6876A2ED7C2D800AACE22 /* trainer */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2CD6876D2ED7C2D800AACE22 /* trainer */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2CF8BF632FCD27AB0008BEB0 /* Exceptions for "trainer" folder in "trainer" target */,
+			);
+			path = trainer;
+			sourceTree = "<group>";
+		};
+		2CD6880E2ED93DAB00AACE22 /* trainerUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = trainerUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2CD687682ED7C2D800AACE22 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CD688812EDCF10B00AACE22 /* CoreBluetooth.framework in Frameworks */,
+				2C6773732EF825F800C4D621 /* FIT in Frameworks */,
+				2CD688832EDCF14C00AACE22 /* FileProvider.framework in Frameworks */,
+				2CFAEDEB2F8C79360040DF4D /* libfitness.xcframework in Frameworks */,
+				2CD688842EDCF18500AACE23 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CD6880A2ED93DAB00AACE22 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CD6881B2ED93DD200AACE22 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2CD687622ED7C2D800AACE22 = {
+			isa = PBXGroup;
+			children = (
+				2CD6876D2ED7C2D800AACE22 /* trainer */,
+				2CD6880E2ED93DAB00AACE22 /* trainerUITests */,
+				2CD687FB2ED92D1800AACE22 /* Frameworks */,
+				2CD6876C2ED7C2D800AACE22 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2CD6876C2ED7C2D800AACE22 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2CD6876B2ED7C2D800AACE22 /* trainer.app */,
+				2CD6880D2ED93DAB00AACE22 /* trainerUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2CD687FB2ED92D1800AACE22 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2CFAEDEA2F8C79360040DF4D /* libfitness.xcframework */,
+				2CD688852EDCF20E00AACE22 /* fit.sdk-21.141.00 */,
+				2CD688842EDCF18500AACE22 /* libsqlite3.tbd */,
+				2CD688822EDCF14C00AACE22 /* FileProvider.framework */,
+				2CD688802EDCF10B00AACE22 /* CoreBluetooth.framework */,
+				2CD6881A2ED93DD200AACE22 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2CD6876A2ED7C2D800AACE22 /* trainer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CD6877B2ED7C2D900AACE22 /* Build configuration list for PBXNativeTarget "trainer" */;
+			buildPhases = (
+				2CD687672ED7C2D800AACE22 /* Sources */,
+				2CD687682ED7C2D800AACE22 /* Frameworks */,
+				2CD687692ED7C2D800AACE22 /* Resources */,
+				2CFAEDED2F8C79360040DF4D /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2CD6876D2ED7C2D800AACE22 /* trainer */,
+			);
+			name = trainer;
+			packageProductDependencies = (
+				2C6773722EF825F800C4D621 /* FIT */,
+			);
+			productName = mobile;
+			productReference = 2CD6876B2ED7C2D800AACE22 /* trainer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2CD6880C2ED93DAB00AACE22 /* trainerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2CD688152ED93DAB00AACE22 /* Build configuration list for PBXNativeTarget "trainerUITests" */;
+			buildPhases = (
+				2CD688092ED93DAB00AACE22 /* Sources */,
+				2CD6880A2ED93DAB00AACE22 /* Frameworks */,
+				2CD6880B2ED93DAB00AACE22 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2CD688142ED93DAB00AACE22 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2CD6880E2ED93DAB00AACE22 /* trainerUITests */,
+			);
+			name = trainerUITests;
+			packageProductDependencies = (
+			);
+			productName = mobileUITests;
+			productReference = 2CD6880D2ED93DAB00AACE22 /* trainerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2CD687632ED7C2D800AACE22 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2610;
+				LastUpgradeCheck = 2610;
+				TargetAttributes = {
+					2CD6876A2ED7C2D800AACE22 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					2CD6880C2ED93DAB00AACE22 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 2CD6876A2ED7C2D800AACE22;
+					};
+				};
+			};
+			buildConfigurationList = 2CD687662ED7C2D800AACE22 /* Build configuration list for PBXProject "trainer" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2CD687622ED7C2D800AACE22;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2CD6876C2ED7C2D800AACE22 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2CD6876A2ED7C2D800AACE22 /* trainer */,
+				2CD6880C2ED93DAB00AACE22 /* trainerUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2CD687692ED7C2D800AACE22 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CD6880B2ED93DAB00AACE22 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2CD687672ED7C2D800AACE22 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CD688092ED93DAB00AACE22 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2CD688142ED93DAB00AACE22 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2CD6876A2ED7C2D800AACE22 /* trainer */;
+			targetProxy = 2CD688132ED93DAB00AACE22 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2CD687792ED7C2D900AACE22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 249W3864JK;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2CD6877A2ED7C2D900AACE22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 249W3864JK;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2CD6877C2ED7C2D900AACE22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 249W3864JK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = trainer/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyncfit.fitness.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2CD6877D2ED7C2D900AACE22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 249W3864JK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = trainer/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyncfit.fitness.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2CD688162ED93DAB00AACE22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 249W3864JK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyncfit.fitness.mobileUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = mobile;
+			};
+			name = Debug;
+		};
+		2CD688172ED93DAB00AACE22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 249W3864JK;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyncfit.fitness.mobileUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = mobile;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2CD687662ED7C2D800AACE22 /* Build configuration list for PBXProject "trainer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CD687792ED7C2D900AACE22 /* Debug */,
+				2CD6877A2ED7C2D900AACE22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2CD6877B2ED7C2D900AACE22 /* Build configuration list for PBXNativeTarget "trainer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CD6877C2ED7C2D900AACE22 /* Debug */,
+				2CD6877D2ED7C2D900AACE22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2CD688152ED93DAB00AACE22 /* Build configuration list for PBXNativeTarget "trainerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2CD688162ED93DAB00AACE22 /* Debug */,
+				2CD688172ED93DAB00AACE22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2C6773722EF825F800C4D621 /* FIT */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FIT;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 2CD687632ED7C2D800AACE22 /* Project object */;
+}
