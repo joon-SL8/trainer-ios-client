@@ -30,20 +30,29 @@ public struct MRCWorkout: Identifiable, Equatable {
     public init(from mrcCourse: MrcCourse) {
         self.id = UUID()
         self.name = mrcCourse.filename
-        self.blocks = mrcCourse.course.compactMap { kotlinPairAny in
-            guard let kotlinPair = kotlinPairAny as? KotlinPair<KotlinFloat, KotlinFloat> else { return nil }
+        
+        let courseData = mrcCourse.course
+        var calculatedBlocks: [MRCBlock] = []
+        
+        for (index, pair) in courseData.enumerated() {
+            let targetPower = pair.first?.floatValue ?? 0.0
+            let startTime = pair.second?.floatValue ?? 0.0
             
-            let targetPower = kotlinPair.first?.floatValue ?? 0.0
-            let startTime = kotlinPair.second?.floatValue ?? 0.0
+            let endTime: Float
+            if index < courseData.count - 1 {
+                endTime = courseData[index + 1].second?.floatValue ?? startTime
+            } else {
+                // For the last block, we use totalCourseTime
+                endTime = Float(mrcCourse.totalCourseTime())
+            }
             
-            // PROBLEM: MrcCourse.course only provides (targetPower, startTime). It does not provide endTime.
-            // For now, setting endTime to startTime as a placeholder to prevent KVC crash.
-            // This needs further investigation and proper mapping for endTime.
-            return MRCBlock(
+            calculatedBlocks.append(MRCBlock(
                 startTime: Double(startTime),
-                endTime: Double(startTime + 1.0), // Placeholder: assuming each block has a duration of 1 minute for now to avoid zero duration.
+                endTime: Double(endTime),
                 targetPower: Double(targetPower)
-            )
+            ))
         }
+        
+        self.blocks = calculatedBlocks.sorted { $0.startTime < $1.startTime }
     }
 }
