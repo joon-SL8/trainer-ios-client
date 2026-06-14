@@ -4,6 +4,7 @@ struct MRCBlockListView: View {
     let blocks: [MRCBlock]
     let elapsedTime: TimeInterval
     let intensityFactor: Double
+    var isStatic: Bool = false
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -13,7 +14,7 @@ struct MRCBlockListView: View {
                         let scaledTargetPower = block.targetPower * intensityFactor
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(formatTime(block.startTime)) - \(formatTime(block.endTime))")
+                                Text("\(formatDuration(block.startTime)) - \(formatDuration(block.endTime)) (\(formatDuration(block.endTime - block.startTime)))")
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
                                 
@@ -22,7 +23,7 @@ struct MRCBlockListView: View {
                                     .fontWeight(.bold)
                             }
                             Spacer()
-                            if isCurrent(block) {
+                            if !isStatic && isCurrent(block) {
                                 Image(systemName: "chevron.right.circle.fill")
                                     .foregroundColor(.blue)
                             }
@@ -31,22 +32,26 @@ struct MRCBlockListView: View {
                         .padding(.horizontal, 12)
                         .background(
                             PowerZoneDefinition.zone(forPowerPercentage: Int(scaledTargetPower)).swiftColor
-                                .opacity(isCurrent(block) ? 0.35 : (isCompleted(block) ? 0.05 : 0.15))
+                                .opacity((!isStatic && isCurrent(block)) ? 0.35 : ((!isStatic && isCompleted(block)) ? 0.05 : 0.15))
                         )
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(isCurrent(block) ? PowerZoneDefinition.zone(forPowerPercentage: Int(scaledTargetPower)).swiftColor.opacity(0.8) : Color.clear, lineWidth: 2)
+                                .stroke((!isStatic && isCurrent(block)) ? PowerZoneDefinition.zone(forPowerPercentage: Int(scaledTargetPower)).swiftColor.opacity(0.8) : Color.clear, lineWidth: 2)
                         )
                         .id(block.id)
                     }
                 }
             }
             .onChange(of: elapsedTime) { newTime in
-                scrollToCurrent(proxy: proxy)
+                if !isStatic {
+                    scrollToCurrent(proxy: proxy)
+                }
             }
             .onAppear {
-                scrollToCurrent(proxy: proxy)
+                if !isStatic {
+                    scrollToCurrent(proxy: proxy)
+                }
             }
         }
     }
@@ -59,10 +64,10 @@ struct MRCBlockListView: View {
         }
     }
     
-    private func formatTime(_ minutes: Double) -> String {
+    private func formatDuration(_ minutes: Double) -> String {
         let mins = Int(minutes)
         let secs = Int((minutes.truncatingRemainder(dividingBy: 1)) * 60)
-        return String(format: "%d:%02d", mins, secs)
+        return "\(mins):\(String(format: "%02d", secs))"
     }
     
     private func isCurrent(_ block: MRCBlock) -> Bool {

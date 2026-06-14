@@ -24,55 +24,68 @@ struct LibraryDetailView: View {
     }
 
     var body: some View {
-        ZStack {
-            VStack {
-                if isLoading {
-                    ProgressView("Parsing file...")
-                } else if let errorMessage = errorMessage {
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 48))
-                            .foregroundColor(.orange)
-                        Text(errorMessage)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .foregroundColor(.secondary)
-                } else if let course = course {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            headerSection(course)
-                            
-                            Divider()
-                            
-                            detailsSection(course)
-                            
-                            if !course.description_.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
+        VStack {
+            if isLoading {
+                ProgressView("Parsing file...")
+            } else if let errorMessage = errorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundColor(.orange)
+                    Text(errorMessage)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .foregroundColor(.secondary)
+            } else if let course = course {
+                let workout = MRCWorkout(from: course)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        headerSection(course)
+                        
+                        Divider()
+                        
+                        detailsSection(course)
+                        
+                        if !course.description_.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
                                     Text("Description")
                                         .font(.headline)
-                                    Text(course.description_)
-                                        .font(.body)
+                                    Spacer()
+                                    playButton(course)
                                 }
+                                Text(course.description_)
+                                    .font(.body)
+                            }
+                        } else {
+                            HStack {
+                                Text("Details")
+                                    .font(.headline)
+                                Spacer()
+                                playButton(course)
                             }
                         }
-                        .padding()
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Intervals")
+                                .font(.headline)
+                            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
+                                .frame(height: 200)
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Profile")
+                                .font(.headline)
+                            WorkoutHistogramView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
+                                .frame(height: 150)
+                        }
                     }
-                } else {
-                    Text("Failed to parse file content.")
-                        .foregroundColor(.secondary)
+                    .padding()
                 }
-            }
-            
-            if !isLoading && course != nil {
-                startSessionButton
-            }
-            
-            // Progress Modal Overlay
-            if libraryViewModel.isParsing {
-                ParsingProgressModal(progress: libraryViewModel.parsingProgress) {
-                    libraryViewModel.cancelParsing()
-                }
+            } else {
+                Text("Failed to parse file content.")
+                    .foregroundColor(.secondary)
             }
         }
         .navigationTitle(file.data as? String ?? "Detail")
@@ -248,37 +261,30 @@ struct LibraryDetailView: View {
         isBookmarked.toggle()
     }
     
-    private var startSessionButton: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Button(action: {
-                    print("LibraryDetailView: Start button clicked.")
-                    if isBluetoothUnavailable {
-                        showBluetoothExplanation = true
-                    } else {
-                        bluetoothManager.requestPermission()
-                        if let currentCourse = course {
-                            workoutSelectionViewModel.workout = MRCWorkout(from: currentCourse)
-                            workoutSelectionViewModel.showSensorSelection = true
-                            print("LibraryDetailView: Sensor selection requested for \(currentCourse.filename). Navigating back.")
-                            navigationRouter.navigateBack() // Pop back to MainView after selection
-                        }
-                    }
-                }) {
-                    Image(systemName: "play.fill")
-                        .font(.title)
-                        .foregroundColor(.white)
-                        .padding(20)
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                        .shadow(radius: 5)
-                }
-                .padding(.trailing, 48)
-                .padding(.bottom, 48)
-                .accessibilityIdentifier("startSessionButton")
+    private func playButton(_ course: MrcCourse) -> some View {
+        Button(action: {
+            print("LibraryDetailView: Play button clicked.")
+            if isBluetoothUnavailable {
+                showBluetoothExplanation = true
+            } else {
+                bluetoothManager.requestPermission()
+                workoutSelectionViewModel.workout = MRCWorkout(from: course)
+                workoutSelectionViewModel.showSensorSelection = true
+                print("LibraryDetailView: Sensor selection requested for \(course.filename). Navigating back.")
+                navigationRouter.navigateBack()
             }
+        }) {
+            HStack {
+                Image(systemName: "play.fill")
+                Text("Start")
+            }
+            .fontWeight(.bold)
+            .foregroundColor(.white)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(Color.blue)
+            .cornerRadius(20)
         }
+        .accessibilityIdentifier("startSessionButton")
     }
 }

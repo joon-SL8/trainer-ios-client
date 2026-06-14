@@ -4,6 +4,7 @@ struct WorkoutHistogramView: View {
     let blocks: [MRCBlock]
     let elapsedTime: TimeInterval
     let intensityFactor: Double
+    var isStatic: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -14,32 +15,34 @@ struct WorkoutHistogramView: View {
                 let maxPower = max(100, blocks.map { $0.targetPower * intensityFactor }.max() ?? 100)
                 
                 ZStack(alignment: .bottomLeading) {
-                    // Base Layer: Entire Profile (Pale/Completed state)
-                    workoutProfile(blocks: blocks, totalTime: totalTime, maxPower: maxPower, opacity: 0.2, geometry: geometry)
+                    // Base Layer: Entire Profile
+                    workoutProfile(blocks: blocks, totalTime: totalTime, maxPower: maxPower, opacity: isStatic ? 0.8 : 0.2, geometry: geometry)
                     
-                    // Progress Layer: Future Profile (Bright state)
-                    let progressMinutes = elapsedTime / 60.0
-                    let totalTimeSafe = max(0.001, totalTime)
-                    let widthSafe = max(0, geometry.size.width)
-                    let progressX = CGFloat(progressMinutes / totalTimeSafe) * widthSafe
-                    
-                    workoutProfile(blocks: blocks, totalTime: totalTime, maxPower: maxPower, opacity: 0.6, geometry: geometry)
-                        .mask(
-                            HStack(spacing: 0) {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(width: max(0, min(progressX, widthSafe)))
-                                Rectangle()
-                                    .fill(Color.black)
-                                Spacer(minLength: 0)
-                            }
-                        )
-                    
-                    // Progress cursor
-                    Rectangle()
-                        .fill(Color.yellow)
-                        .frame(width: 2)
-                        .offset(x: max(0, min(progressX, widthSafe)))
+                    if !isStatic {
+                        // Progress Layer: Future Profile (Bright state)
+                        let progressMinutes = elapsedTime / 60.0
+                        let totalTimeSafe = max(0.001, totalTime)
+                        let widthSafe = max(0, geometry.size.width)
+                        let progressX = CGFloat(progressMinutes / totalTimeSafe) * widthSafe
+                        
+                        workoutProfile(blocks: blocks, totalTime: totalTime, maxPower: maxPower, opacity: 0.6, geometry: geometry)
+                            .mask(
+                                HStack(spacing: 0) {
+                                    Rectangle()
+                                        .fill(Color.clear)
+                                        .frame(width: max(0, min(progressX, widthSafe)))
+                                    Rectangle()
+                                        .fill(Color.black)
+                                    Spacer(minLength: 0)
+                                }
+                            )
+                        
+                        // Progress cursor
+                        Rectangle()
+                            .fill(Color.yellow)
+                            .frame(width: 2)
+                            .offset(x: max(0, min(progressX, widthSafe)))
+                    }
                 }
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(4)
@@ -54,7 +57,7 @@ struct WorkoutHistogramView: View {
         let widthSafe = max(0, geometry.size.width)
         let heightSafe = max(0, geometry.size.height)
         
-        return HStack(alignment: .bottom, spacing: 0) {
+        HStack(alignment: .bottom, spacing: 0) {
             ForEach(blocks) { block in
                 let scaledTargetPower = block.targetPower * intensityFactor
                 let blockWidth = CGFloat((block.endTime - block.startTime) / totalTimeSafe) * widthSafe
