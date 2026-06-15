@@ -11,7 +11,8 @@ struct MRCBlockListView: View {
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(blocks) { block in
-                        let scaledTargetPower = block.targetPower * intensityFactor
+                        let averagePower = (block.targetStartPower + block.targetEndPower) / 2.0
+                        let scaledTargetPower = averagePower * intensityFactor
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(formatDuration(block.startTime)) - \(formatDuration(block.endTime)) (\(formatDuration(block.endTime - block.startTime)))")

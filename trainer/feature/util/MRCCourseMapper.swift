@@ -5,8 +5,9 @@ public class MRCCourseMapper {
     public static func map(workout: MRCWorkout) -> MrcCourse {
         let course = workout.blocks.map { block in
             // Libfitness expected float pairs for power and time
-            KotlinPair(
-                first: KotlinFloat(float: Float(block.targetPower)),
+            let averagePower = (block.targetStartPower + block.targetEndPower) / 2.0
+            return KotlinPair(
+                first: KotlinFloat(float: Float(averagePower)),
                 second: KotlinFloat(float: Float(block.startTime)) // Assuming start time as reference
             )
         }

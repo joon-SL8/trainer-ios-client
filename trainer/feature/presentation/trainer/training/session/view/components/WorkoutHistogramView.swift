@@ -12,7 +12,7 @@ struct WorkoutHistogramView: View {
                 Color.clear
             } else {
                 let totalTime = blocks.last?.endTime ?? 1
-                let maxPower = max(100, blocks.map { $0.targetPower * intensityFactor }.max() ?? 100)
+                let maxPower = max(100, blocks.map { (($0.targetStartPower + $0.targetEndPower) / 2.0) * intensityFactor }.max() ?? 100)
                 
                 ZStack(alignment: .bottomLeading) {
                     // Base Layer: Entire Profile
@@ -54,20 +54,24 @@ struct WorkoutHistogramView: View {
     private func workoutProfile(blocks: [MRCBlock], totalTime: Double, maxPower: Double, opacity: Double, geometry: GeometryProxy) -> some View {
         let totalTimeSafe = max(0.001, totalTime)
         let maxPowerSafe = max(1.0, maxPower)
-        let widthSafe = max(0, geometry.size.width)
-        let heightSafe = max(0, geometry.size.height)
-        
-        HStack(alignment: .bottom, spacing: 0) {
-            ForEach(blocks) { block in
-                let scaledTargetPower = block.targetPower * intensityFactor
-                let blockWidth = CGFloat((block.endTime - block.startTime) / totalTimeSafe) * widthSafe
-                let blockHeight = CGFloat(scaledTargetPower / maxPowerSafe) * heightSafe
-                let zone = PowerZoneDefinition.zone(forPowerPercentage: Int(scaledTargetPower))
+        let width = geometry.size.width
+        let height = geometry.size.height
+
+        Path { path in
+            path.move(to: CGPoint(x: 0, y: height)) // Start at bottom left
+            
+            for block in blocks {
+                let startX = CGFloat(block.startTime / totalTimeSafe) * width
+                let endX = CGFloat(block.endTime / totalTimeSafe) * width
+                let startY = height - CGFloat(((block.targetStartPower + block.targetEndPower) / 2.0) * intensityFactor / maxPowerSafe) * height
+                let endY = height - CGFloat(((block.targetStartPower + block.targetEndPower) / 2.0) * intensityFactor / maxPowerSafe) * height
                 
-                Rectangle()
-                    .fill(zone.swiftColor.opacity(opacity))
-                    .frame(width: max(0, blockWidth), height: max(0, blockHeight))
+                path.addLine(to: CGPoint(x: startX, y: startY))
+                path.addLine(to: CGPoint(x: endX, y: endY))
             }
+            path.addLine(to: CGPoint(x: width, y: height)) // End at bottom right
+            path.closeSubpath()
         }
+        .fill(Color.blue.opacity(opacity))
     }
 }

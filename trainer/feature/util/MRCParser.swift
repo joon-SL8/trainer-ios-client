@@ -132,7 +132,7 @@ public class MRCParser {
               let endMinutes = Double(parts2[0].replacingOccurrences(of: ",", with: ".")),
               let targetPower = Double(parts2[1].replacingOccurrences(of: ",", with: ".")) else { return nil }
         
-        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetPower: targetPower)
+        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetStartPower: targetPower, targetEndPower: targetPower)
     }
     
     public static func getRandomMRCFile() throws -> URL? {
