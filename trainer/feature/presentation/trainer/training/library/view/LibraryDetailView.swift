@@ -55,7 +55,7 @@ struct LibraryDetailView: View {
                                         .font(.headline)
                                     Spacer()
                                     playButton(course)
-                                    viewRawButton(course)
+                                    // viewRawButton(course)
                                 }
                                 Text(course.description_)
                                     .font(.body)
