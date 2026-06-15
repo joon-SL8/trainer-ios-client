@@ -10,6 +10,7 @@ struct LibraryDetailView: View {
     @EnvironmentObject var navigationRouter: NavigationRouter
     @EnvironmentObject var workoutSelectionViewModel: WorkoutSelectionViewModel
     @State private var course: MrcCourse? = nil
+    @State private var workout: MRCWorkout? = nil
     @State private var isBookmarked: Bool = false
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
@@ -86,6 +87,13 @@ struct LibraryDetailView: View {
             } else {
                 Text("Failed to parse file content.")
                     .foregroundColor(.secondary)
+            }
+        }
+        .overlay {
+            if libraryViewModel.isParsing {
+                ParsingProgressModal(progress: libraryViewModel.parsingProgress) {
+                    libraryViewModel.cancelParsing()
+                }
             }
         }
         .navigationTitle(file.data as? String ?? "Detail")
@@ -209,7 +217,9 @@ struct LibraryDetailView: View {
             let lines = content.components(separatedBy: .newlines)
             let parser = AssetFileParseUseCase(file: fileName, lines: lines)
             self.course = parser.invoke()
-            
+            if let course = self.course {
+                self.workout = MRCWorkout(from: course)
+            }
             if self.course == nil {
                 errorMessage = "File is empty or corrupted."
             }
