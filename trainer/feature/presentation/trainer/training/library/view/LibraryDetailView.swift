@@ -55,6 +55,7 @@ struct LibraryDetailView: View {
                                         .font(.headline)
                                     Spacer()
                                     playButton(course)
+                                    viewRawButton(course)
                                 }
                                 Text(course.description_)
                                     .font(.body)
@@ -296,5 +297,21 @@ struct LibraryDetailView: View {
             .cornerRadius(20)
         }
         .accessibilityIdentifier("startSessionButton")
+    }
+    
+    private func viewRawButton(_ course: MrcCourse) -> some View {
+        Button(action: {
+            if let path = resolveFullPath(for: course.filename) {
+                navigationRouter.navigate(to: RawMRCViewRoute(filePath: path))
+            }
+        }) {
+            Text("View Raw")
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(20)
+        }
     }
 }
