@@ -55,6 +55,7 @@ struct LibraryDetailView: View {
                                         .font(.headline)
                                     Spacer()
                                     playButton(course)
+                                    // viewRawButton(course)
                                 }
                                 Text(course.description_)
                                     .font(.body)
@@ -198,22 +199,23 @@ struct LibraryDetailView: View {
     private func parseFile() {
         isLoading = true
         errorMessage = nil
-        
+
         let fileName = file.data as? String ?? ""
-        guard let fullPath = resolveFullPath(for: fileName) else {
-            errorMessage = "Failed to parse file content."
-            isLoading = false
-            return
-        }
-        
+
         do {
-            let content = try String(contentsOfFile: fullPath, encoding: .utf8)
+            guard let url = try MRCParser.findMRCFile(named: fileName) else {
+                errorMessage = "File not found."
+                isLoading = false
+                return
+            }
+
+            let content = try String(contentsOf: url, encoding: .utf8)
             if content.isEmpty {
                 errorMessage = "File is empty or corrupted."
                 isLoading = false
                 return
             }
-            
+
             let lines = content.components(separatedBy: .newlines)
             let parser = AssetFileParseUseCase(file: fileName, lines: lines)
             self.course = parser.invoke()
@@ -221,37 +223,16 @@ struct LibraryDetailView: View {
                 self.workout = MRCWorkout(from: course)
             }
             if self.course == nil {
-                errorMessage = "File is empty or corrupted."
+                errorMessage = "Failed to parse file content."
             }
         } catch {
-            errorMessage = "File is empty or corrupted."
+            errorMessage = "File error: \(error.localizedDescription)"
         }
-        
+
         isLoading = false
     }
-    
-    private func resolveFullPath(for fileName: String) -> String? {
-        guard let resourcePath = Bundle.main.resourcePath else { return nil }
-        
-        // Construct the base path within the app bundle
-        let baseRelativePath = "Frameworks/libfitness.framework/composeResources/com.skjline.fitness.resources/files/training"
-        var fullPath = (resourcePath as NSString).appendingPathComponent(baseRelativePath)
-        
-        // Append the directory path if it's not root
-        if !directoryPath.isEmpty && directoryPath != "/" {
-            fullPath = (fullPath as NSString).appendingPathComponent(directoryPath)
-        }
-        
-        fullPath = (fullPath as NSString).appendingPathComponent(fileName)
-        
-        // Check if file exists
-        if FileManager.default.fileExists(atPath: fullPath) {
-            return fullPath
-        }
-        
-        return nil
-    }
 
+    
     private func checkBookmarkStatus() {
         let bookmarkedPaths = UserDefaults.standard.stringArray(forKey: "bookmarked_assets") ?? []
         isBookmarked = bookmarkedPaths.contains(file.data as? String ?? "")
@@ -296,5 +277,27 @@ struct LibraryDetailView: View {
             .cornerRadius(20)
         }
         .accessibilityIdentifier("startSessionButton")
+    }
+    
+    private func viewRawButton(_ course: MrcCourse) -> some View {
+        Button(action: {
+            print("LibraryDetailView: View Raw button clicked for \(course.filename)")
+            do {
+                if let url = try MRCParser.findMRCFile(named: course.filename) {
+                    print("LibraryDetailView: Navigating to RawMRCView with path: \(url.path)")
+                    navigationRouter.navigate(to: RawMRCViewRoute(filePath: url.path))
+                }
+            } catch {
+                print("LibraryDetailView: Failed to resolve path for \(course.filename): \(error)")
+            }
+        }) {
+            Text("View Raw")
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(20)
+        }
     }
 }

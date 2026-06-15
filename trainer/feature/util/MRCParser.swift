@@ -132,7 +132,7 @@ public class MRCParser {
               let endMinutes = Double(parts2[0].replacingOccurrences(of: ",", with: ".")),
               let targetPower = Double(parts2[1].replacingOccurrences(of: ",", with: ".")) else { return nil }
         
-        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetPower: targetPower)
+        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetStartPower: targetPower, targetEndPower: targetPower)
     }
     
     public static func getRandomMRCFile() throws -> URL? {
@@ -178,31 +178,19 @@ public class MRCParser {
         let frameworkBundle = Bundle(identifier: "com.skjline.fitness.libfitness")
         let trainingSubPath = "composeResources/com.skjline.fitness.resources/files/training"
         
-        var fileURL: URL? = nil
+        let fileManager = FileManager.default
+        let searchDirectories = [
+            frameworkBundle?.resourceURL?.appendingPathComponent(trainingSubPath),
+            Bundle.main.resourceURL
+        ].compactMap { $0 }
         
-        // First, try to find in the framework bundle
-        if let bundleURL = frameworkBundle?.resourceURL?.appendingPathComponent(trainingSubPath) {
-            fileURL = bundleURL.appendingPathComponent(named).appendingPathExtension("mrc")
-            if FileManager.default.fileExists(atPath: fileURL?.path ?? "") {
-                return fileURL
-            }
-            // Also try without .mrc extension (in case the 'named' parameter already includes it)
-            fileURL = bundleURL.appendingPathComponent(named)
-            if FileManager.default.fileExists(atPath: fileURL?.path ?? "") {
-                return fileURL
-            }
-        }
-        
-        // If not found in framework bundle, try main app bundle
-        if let mainBundleURL = Bundle.main.resourceURL {
-            fileURL = mainBundleURL.appendingPathComponent(named).appendingPathExtension("mrc")
-            if FileManager.default.fileExists(atPath: fileURL?.path ?? "") {
-                return fileURL
-            }
-            // Also try without .mrc extension
-            fileURL = mainBundleURL.appendingPathComponent(named)
-            if FileManager.default.fileExists(atPath: fileURL?.path ?? "") {
-                return fileURL
+        for searchDir in searchDirectories {
+            let enumerator = fileManager.enumerator(at: searchDir, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles, .skipsPackageDescendants])
+            
+            while let fileURL = enumerator?.nextObject() as? URL {
+                if fileURL.lastPathComponent == named || fileURL.deletingPathExtension().lastPathComponent == named {
+                    return fileURL
+                }
             }
         }
         

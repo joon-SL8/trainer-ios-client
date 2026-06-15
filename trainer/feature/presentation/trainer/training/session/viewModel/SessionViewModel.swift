@@ -36,7 +36,8 @@ public class SessionViewModel: ObservableObject {
         guard let workout = workout else { return .blue }
         let currentMinutes = elapsedTime / 60.0
         if let currentBlock = workout.blocks.first(where: { currentMinutes >= $0.startTime && currentMinutes < $0.endTime }) {
-            let percentage = Int(currentBlock.targetPower * intensityFactor)
+            let averagePower = (currentBlock.targetStartPower + currentBlock.targetEndPower) / 2.0
+            let percentage = Int(averagePower * intensityFactor)
             return PowerZoneDefinition.zone(forPowerPercentage: percentage).swiftColor
         }
         return .blue

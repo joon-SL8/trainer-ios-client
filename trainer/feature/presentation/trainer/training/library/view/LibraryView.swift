@@ -5,7 +5,6 @@ struct LibraryView: View {
     @EnvironmentObject var navigationRouter: NavigationRouter
     @EnvironmentObject var workoutSelectionViewModel: WorkoutSelectionViewModel
     @StateObject private var viewModel = LibraryViewModel()
-    @State private var selectedFile: AssetProperty? = nil
 
     var body: some View {
         VStack {
@@ -58,28 +57,22 @@ struct LibraryView: View {
                 }
             }
         }
-        // Hidden link to handle file navigation for older iOS versions
-        .background(
-            NavigationLink(destination: Group {
-                if let file = selectedFile {
-                    LibraryDetailView(file: file, directoryPath: viewModel.currentPath)
-                        .environmentObject(viewModel)
-                        .environmentObject(workoutSelectionViewModel)
-                }
-            }, tag: "detail", selection: Binding(
-                get: { selectedFile != nil ? "detail" : nil },
-                set: { if $0 == nil { selectedFile = nil } }
-            )) {
-                EmptyView()
-            }
-        )
+        .navigationDestination(for: AssetProperty.self) { file in
+            LibraryDetailView(file: file, directoryPath: viewModel.currentPath)
+                .environmentObject(viewModel)
+                .environmentObject(workoutSelectionViewModel)
+                .environmentObject(navigationRouter)
+        }
+        .navigationDestination(for: RawMRCViewRoute.self) { route in
+            RawMRCView(filePath: route.filePath)
+        }
     }
 
     private func handleTap(on item: AssetProperty) {
         if item.type == AssetProperty.Type_.dir {
             viewModel.navigateTo(directory: viewModel.itemDisplayName(item))
         } else if item.type == AssetProperty.Type_.file {
-            selectedFile = item
+            navigationRouter.navigate(to: item)
         }
     }
 
