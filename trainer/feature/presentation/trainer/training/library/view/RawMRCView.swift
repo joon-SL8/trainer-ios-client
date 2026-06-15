@@ -34,9 +34,10 @@ struct RawMRCView: View {
     
     private func loadContent() {
         do {
-            content = try String(contentsOfFile: filePath, encoding: .utf8)
+            let url = URL(fileURLWithPath: filePath)
+            content = try String(contentsOf: url, encoding: .utf8)
         } catch {
-            content = "Error loading file content."
+            content = "Error loading file content: \(error.localizedDescription)"
         }
         isLoading = false
     }
