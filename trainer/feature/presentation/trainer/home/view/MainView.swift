@@ -109,13 +109,9 @@ struct MainView: View {
                         .foregroundColor(.yellow)
                 }
             }
-            .font(.title2)
-            .fontWeight(.semibold)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, minHeight: geometry.size.height * 0.12)
-            .background(isBluetoothUnavailable ? Color.gray.opacity(0.3) : Color.blue.opacity(0.3))
-            .cornerRadius(12)
+            .frame(minHeight: geometry.size.height * 0.12)
         }
+        .buttonStyle(VividButtonStyle(backgroundColor: .blue, isEnabled: !isBluetoothUnavailable))
         .accessibilityIdentifier("sessionButton")
     }
 
@@ -127,14 +123,10 @@ struct MainView: View {
                 Image(systemName: "calendar")
                     .font(.title2)
                 Text("Calendar")
-                    .font(.title2)
-                    .fontWeight(.semibold)
             }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, minHeight: geometry.size.height * 0.12)
-            .background(Color.green.opacity(0.3))
-            .cornerRadius(12)
+            .frame(minHeight: geometry.size.height * 0.12)
         }
+        .buttonStyle(VividButtonStyle(backgroundColor: .green))
         .accessibilityIdentifier("calendarButton")
     }
 
@@ -146,14 +138,10 @@ struct MainView: View {
                 Image(systemName: "books.vertical")
                     .font(.title2)
                 Text("Library")
-                    .font(.title2)
-                    .fontWeight(.semibold)
             }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, minHeight: geometry.size.height * 0.12)
-            .background(Color.orange.opacity(0.3))
-            .cornerRadius(12)
+            .frame(minHeight: geometry.size.height * 0.12)
         }
+        .buttonStyle(VividButtonStyle(backgroundColor: .orange))
         .accessibilityIdentifier("libraryButton")
     }
 
