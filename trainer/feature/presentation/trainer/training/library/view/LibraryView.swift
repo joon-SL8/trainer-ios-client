@@ -61,6 +61,7 @@ struct LibraryView: View {
             LibraryDetailView(file: file, directoryPath: viewModel.currentPath)
                 .environmentObject(viewModel)
                 .environmentObject(workoutSelectionViewModel)
+                .environmentObject(navigationRouter)
         }
         .navigationDestination(for: RawMRCViewRoute.self) { route in
             RawMRCView(filePath: route.filePath)
