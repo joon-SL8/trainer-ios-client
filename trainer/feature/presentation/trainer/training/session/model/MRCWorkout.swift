@@ -47,11 +47,11 @@ public struct MRCWorkout: Identifiable, Equatable {
             guard let pair1 = courseData[i] as? KotlinPair<KotlinFloat, KotlinFloat>,
                   let pair2 = courseData[i+1] as? KotlinPair<KotlinFloat, KotlinFloat> else { continue }
             
-            let startPower = Double(pair1.first?.floatValue ?? 0.0)
-            let startTime = Double(pair1.second?.floatValue ?? 0.0)
+            let startTime = Double(pair1.first?.floatValue ?? 0.0)
+            let startPower = Double(pair1.second?.floatValue ?? 0.0)
             
-            let endPower = Double(pair2.first?.floatValue ?? 0.0)
-            let endTime = Double(pair2.second?.floatValue ?? 0.0)
+            let endTime = Double(pair2.first?.floatValue ?? 0.0)
+            let endPower = Double(pair2.second?.floatValue ?? 0.0)
             
             calculatedBlocks.append(MRCBlock(
                 startTime: startTime,
