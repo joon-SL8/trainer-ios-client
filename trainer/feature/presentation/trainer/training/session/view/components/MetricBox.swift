@@ -47,7 +47,7 @@ struct MetricBox: View {
             } else {
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
                     Text(isConnected ? value : "-")
-                        .font(.system(size: (isConnected && value.contains("/")) ? 22 : 36, weight: .bold, design: .monospaced))
+                        .font(.system(size: 36, weight: .bold, design: .monospaced))
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                     
@@ -57,7 +57,7 @@ struct MetricBox: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(.horizontal, (isConnected && value.contains("/")) ? 16 : 0)
+                .padding(.horizontal, 0)
                 .frame(maxHeight: .infinity)
             }
         }

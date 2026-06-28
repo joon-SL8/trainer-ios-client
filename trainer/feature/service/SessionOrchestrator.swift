@@ -13,6 +13,8 @@ public class SessionOrchestrator: ObservableObject {
     @Published public var cscData: CSCData?
     @Published public var cyclingPowerData: CyclingPowerData?
     
+    private(set) public var timer = SessionTimeDataTimer()
+
     public init(bluetoothManager: BluetoothManager) {
         self.bluetoothManager = bluetoothManager
         
@@ -36,11 +38,8 @@ public class SessionOrchestrator: ObservableObject {
             .sink { [weak self] (sensorId, characteristicUUID, data) in
                 guard let self = self else { return }
                 
-                print("SessionOrchestrator: Received data for characteristic: \(characteristicUUID.uuidString)")
-                
                 if characteristicUUID == self.bluetoothManager.heartRateMeasurementCharacteristicUUID {
                     // Heart Rate
-                    print("SessionOrchestrator: Matched Heart Rate characteristic.")
                     if let heartRate = BluetoothDataParser.parseHeartRate(from: data) {
                         print("SessionOrchestrator: Received Heart Rate: \(heartRate) BPM")
                         self.sensorData[sensorId] = String(heartRate)
@@ -83,15 +82,28 @@ public class SessionOrchestrator: ObservableObject {
         print("SessionOrchestrator: Stop data collection for \(sensorId)")
     }
     
+    public func setCourseData(course: MrcCourse) {
+        timer.request(action: SetCourse(course: course))
+    }
+
     public func startSession(with workout: MRCWorkout) {
         sessionState = "Active"
+        timer.request(action: Start.shared)
     }
     
     public func pauseSession() {
         sessionState = "Paused"
+        timer.request(action: Pause.shared)
     }
     
     public func stopSession() {
         sessionState = "Idle"
+        timer.request(action: Stop.shared)
     }
+    
+    public func cleanup() {
+        print("SessionOrchestrator: Cleaning up session, disconnecting all sensors.")
+        bluetoothManager.disconnectAll()
+    }
+    
 }

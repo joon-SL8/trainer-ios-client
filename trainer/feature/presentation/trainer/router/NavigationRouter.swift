@@ -1,6 +1,10 @@
 import SwiftUI
 import Combine
 
+public enum Route: Hashable {
+    case stravaAuth
+}
+
 public class NavigationRouter: ObservableObject {
     @Published public var path = NavigationPath()
     

@@ -84,7 +84,11 @@ struct SessionView: View {
         .statusBar(hidden: true)
         .onAppear {
             print("SessionView: Became visible.")
+            UIApplication.shared.isIdleTimerDisabled = true
             loadWorkout()
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
         }
         .alert("File Not Found", isPresented: $showFileError) {
             Button("OK") {

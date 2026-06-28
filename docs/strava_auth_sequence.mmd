@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant User
+    participant ProfileView
+    participant NavigationRouter
+    participant StravaAuthenticationView
+    participant StravaAuthenticationViewModel
+    participant libfitness
+
+    User->>ProfileView: Taps "Strava Authentication"
+    ProfileView->>NavigationRouter: navigate(to: .stravaAuth)
+    NavigationRouter-->>User: Navigates to StravaAuthenticationView
+    User->>StravaAuthenticationView: Taps "Authenticate"
+    StravaAuthenticationView->>StravaAuthenticationViewModel: authenticate()
+    StravaAuthenticationViewModel->>StravaAuthenticationView: Set isAuthenticating=true
+    StravaAuthenticationView-->>User: Show Progress Modal
+    StravaAuthenticationViewModel->>libfitness: getStravaAuthorize()
+    libfitness-->>StravaAuthenticationViewModel: Return Auth Object
+    StravaAuthenticationViewModel->>libfitness: authenticate()
+    libfitness-->>User: Trigger applink/browser auth
+    Note over User,libfitness: User completes authentication
+    libfitness-->>StravaAuthenticationViewModel: Auth Success/Callback
+    StravaAuthenticationViewModel->>StravaAuthenticationView: Set isAuthenticating=false
+    StravaAuthenticationView-->>User: Hide Progress Modal

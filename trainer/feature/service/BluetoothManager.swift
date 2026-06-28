@@ -61,6 +61,7 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     @Published public var isMocking: Bool = false
     @Published public var discoveredSensors: [BluetoothSensor] = []
     @Published var connectionStatus: [UUID: ConnectionStatus] = [:]
+    private var connectedPeripherals: [UUID: CBPeripheral] = [:]
     @Published public var debugUnfilteredScan: Bool = false
     
     public let dataPublisher = PassthroughSubject<(UUID, CBUUID, Data), Never>()
@@ -237,12 +238,20 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
         print("BluetoothManager: Disconnecting from peripheral: \(peripheral.name ?? "Unknown")")
         centralManager?.cancelPeripheralConnection(peripheral)
     }
+    
+    func disconnectAll() {
+        print("BluetoothManager: Disconnecting all \(connectedPeripherals.count) peripherals")
+        for (_, peripheral) in connectedPeripherals {
+            disconnect(from: peripheral)
+        }
+    }
 
     // MARK: - CBCentralManagerDelegate (Connection)
 
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("BluetoothManager: Connected to: \(peripheral.name ?? "Unknown")")
         connectionStatus[peripheral.identifier] = .connected
+        connectedPeripherals[peripheral.identifier] = peripheral
         peripheral.delegate = self
         peripheral.discoverServices(nil)
     }
@@ -250,11 +259,13 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("BluetoothManager: Failed to connect to: \(peripheral.name ?? "Unknown"), error: \(String(describing: error))")
         connectionStatus[peripheral.identifier] = .disconnected
+        connectedPeripherals.removeValue(forKey: peripheral.identifier)
     }
 
     public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("BluetoothManager: Disconnected from: \(peripheral.name ?? "Unknown"), error: \(String(describing: error))")
         connectionStatus[peripheral.identifier] = .disconnected
+        connectedPeripherals.removeValue(forKey: peripheral.identifier)
     }
 
     // MARK: - CBPeripheralDelegate
@@ -304,14 +315,11 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let data = characteristic.value {
-            if characteristic.uuid == heartRateMeasurementCharacteristicUUID {
-                print("BluetoothManager: Received Heart Rate data raw: \(data.map { String(format: "%02hhx", $0) }.joined())")
-                // Publish the raw data directly to allow Orchestrator to parse it correctly
-                dataPublisher.send((peripheral.identifier, characteristic.uuid, data))
-            } else {
-                // For CSC and CP data, or other data, publish the raw data along with the characteristic UUID
-                dataPublisher.send((peripheral.identifier, characteristic.uuid, data))
-            }
+            let hexString = data.map { String(format: "%02hhx", $0) }.joined()
+            print("BluetoothManager: Received data from \(peripheral.name ?? "Unknown") (\(characteristic.uuid.uuidString)): \(hexString)")
+            
+            // Publish the raw data to allow Orchestrator to parse it correctly
+            dataPublisher.send((peripheral.identifier, characteristic.uuid, data))
         }
     }
 }

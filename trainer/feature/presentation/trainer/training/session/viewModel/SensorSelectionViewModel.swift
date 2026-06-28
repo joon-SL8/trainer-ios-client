@@ -10,6 +10,24 @@ class SensorSelectionViewModel: ObservableObject {
     @Published var showBluetoothSettingsAlert: Bool = false
     @Published var workout: MRCWorkout? // New property to hold the workout
     
+    private let fitnessMachineServiceUUID = "1826"
+    
+    var fitnessMachineSensors: [MockSensor] {
+        sensors.filter { sensor in
+            sensor.bluetoothSensor?.advertisedServiceUUIDs.contains(fitnessMachineServiceUUID) ?? false
+        }
+    }
+    
+    var otherSensors: [MockSensor] {
+        sensors.filter { sensor in
+            !(sensor.bluetoothSensor?.advertisedServiceUUIDs.contains(fitnessMachineServiceUUID) ?? false)
+        }
+    }
+    
+    var canStartTraining: Bool {
+        fitnessMachineSensors.contains { $0.status == .Connected }
+    }
+    
     var hasConnectedSensors: Bool {
         sensors.contains { $0.status == .Connected }
     }
@@ -112,11 +130,20 @@ class SensorSelectionViewModel: ObservableObject {
         sensors.filter { $0.status == .Connected }
     }
     
+    func disconnectAll() {
+        bluetoothManager.disconnectAll()
+    }
+    
     deinit {
         scanTask?.cancel()
         scanFlowTask?.cancel()
         connectionTasks.forEach { $0.cancel() }
-        bluetoothManager.stopScanning()
+        
+        let bluetoothManager = self.bluetoothManager
+        Task {
+            bluetoothManager.stopScanning()
+            bluetoothManager.disconnectAll()
+        }
     }
     
     func startScanning() {

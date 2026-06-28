@@ -28,6 +28,12 @@ struct MainView: View {
                 .navigationDestination(for: String.self) { value in
                     navigationDestinations(for: value)
                 }
+                .navigationDestination(for: Route.self) { route in
+                    switch route {
+                    case .stravaAuth:
+                        StravaAuthenticationView()
+                    }
+                }
                 .navigationDestination(for: WorkoutSessionRoute.self) { route in
                     SessionView(sensors: route.sensors, course: route.course, workoutFile: route.workoutFile, workout: route.workout, bluetoothManager: bluetoothManager)
                 }
@@ -257,6 +263,7 @@ struct MainViewSheetsAndCovers: ViewModifier {
         content
             .sheet(isPresented: $showMenu) {
                 ProfileView(showProfile: $showProfile)
+                    .environmentObject(navigationRouter)
             }
             .fullScreenCover(isPresented: $showSensorSelection, onDismiss: {
                 if !connectedSensors.isEmpty {
