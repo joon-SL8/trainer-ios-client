@@ -27,6 +27,7 @@ public class SessionViewModel: ObservableObject {
     
     private let orchestrator: SessionOrchestrator
     private var cancellables = Set<AnyCancellable>()
+    private var timerTask: Task<Void, Never>?
     
     @Published public var isHRConnected: Bool = false
     @Published public var isPowerConnected: Bool = false
@@ -55,10 +56,36 @@ public class SessionViewModel: ObservableObject {
                 self?.heartRate = newContent?.content.hrData != nil ? Double(newContent!.content.hrData) : nil // Update heartRate from newContent
             }
             .store(in: &cancellables)
+            
+        startObservingTimer()
+    }
+    
+    private func startObservingTimer() {
+        timerTask = Task {
+            for await time in orchestrator.timer.asTimestampProvider {
+                await MainActor.run {
+                    self.elapsedTime = Double(time) / 1000.0
+                    updateBlockProgress()
+                }
+            }
+        }
+    }
+    
+    private func updateBlockProgress() {
+        guard let workout = workout else { return }
+        let currentMinutes = elapsedTime / 60.0
+        if let currentBlock = workout.blocks.first(where: { currentMinutes >= $0.startTime && currentMinutes < $0.endTime }) {
+            self.currentBlockElapsedTime = (currentMinutes - currentBlock.startTime) * 60.0
+            self.currentBlockTotalTime = (currentBlock.endTime - currentBlock.startTime) * 60.0
+            objectWillChange.send()
+        }
     }
     
     public func startSession() {
         guard let workout = workout else { return }
+        // Map MRCWorkout to MrcCourse
+        let mrcCourse = MRCCourseMapper.map(workout: workout)
+        orchestrator.setCourseData(course: mrcCourse)
         orchestrator.startSession(with: workout)
         state = .active
     }
@@ -78,7 +105,8 @@ public class SessionViewModel: ObservableObject {
         guard let elapsed = currentBlockElapsedTime, let total = currentBlockTotalTime else {
             return "--:-- / --:--"
         }
-        return "\(formatTimeInterval(elapsed)) / \(formatTimeInterval(total))"
+        let remaining = max(0, total - elapsed)
+        return formatTimeInterval(remaining)
     }
     
     public var blockProgressPercentage: Double {
@@ -92,6 +120,11 @@ public class SessionViewModel: ObservableObject {
         let minutes = Int(interval) / 60
         let seconds = Int(interval) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+    
+    deinit {
+        print("SessionViewModel: Cleaning up...")
+        orchestrator.cleanup()
     }
 
 }

@@ -42,50 +42,35 @@ struct SensorSelectionView: View {
                     .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 15) {
-                            ForEach(viewModel.sensors) { (sensor: MockSensor) in
-                                Button(action: {
-                                    viewModel.connect(to: sensor)
-                                }) {
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(sensor.name)
-                                                .font(.headline)
-                                            if let bluetoothSensor = sensor.bluetoothSensor, !bluetoothSensor.advertisedServiceUUIDs.isEmpty {
-                                                Text("Services: \(bluetoothSensor.advertisedServiceUUIDs.joined(separator: ", "))")
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            Text(sensorText(sensor.type))
-                                                .font(.subheadline)
-                                                .foregroundColor(.secondary)
-                                        }
-                                        Spacer()
-                                        
-                                        if sensor.status == .Connecting {
-                                            ProgressView()
-                                        } else {
-                                            Text(statusText(sensor.status))
-                                                .font(.caption)
-                                                .padding(6)
-                                                .background(statusColor(sensor.status).opacity(0.1))
-                                                .foregroundColor(statusColor(sensor.status))
-                                                .cornerRadius(8)
-                                        }
+                        VStack(spacing: 20) {
+                            if !viewModel.fitnessMachineSensors.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Fitness Machines (Required)")
+                                        .font(.headline)
+                                        .padding(.horizontal)
+                                    ForEach(viewModel.fitnessMachineSensors) { sensor in
+                                        sensorRow(sensor: sensor)
                                     }
-                                    .padding()
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(12)
                                 }
-                                .disabled(sensor.status == .Connecting)
+                            }
+                            
+                            if !viewModel.otherSensors.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Optional Sensors")
+                                        .font(.headline)
+                                        .padding(.horizontal)
+                                    ForEach(viewModel.otherSensors) { sensor in
+                                        sensorRow(sensor: sensor)
+                                    }
+                                }
                             }
                         }
-                        .padding()
+                        .padding(.vertical)
                     }
                 }
                 
                 VStack(spacing: 10) {
-                    if viewModel.hasConnectedSensors {
+                    if viewModel.sensors.count > 0 {
                         Button(action: {
                             bluetoothManager.stopScanning()
                             onComplete?(viewModel.selectedSensors, viewModel.workout)
@@ -96,10 +81,11 @@ struct SensorSelectionView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.green)
+                                .background(viewModel.canStartTraining ? Color.green : Color.gray)
                                 .cornerRadius(12)
                         }
                         .padding(.horizontal)
+                        .disabled(!viewModel.canStartTraining)
                         .accessibilityIdentifier("startTrainingButton")
                     }
                     
@@ -151,6 +137,44 @@ struct SensorSelectionView: View {
                 viewModel.startScanning()
             }
         }
+    }
+    
+    private func sensorRow(sensor: MockSensor) -> some View {
+        Button(action: {
+            viewModel.connect(to: sensor)
+        }) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(sensor.name)
+                        .font(.headline)
+                    if let bluetoothSensor = sensor.bluetoothSensor, !bluetoothSensor.advertisedServiceUUIDs.isEmpty {
+                        Text("Services: \(bluetoothSensor.advertisedServiceUUIDs.joined(separator: ", "))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Text(sensorText(sensor.type))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                
+                if sensor.status == .Connecting {
+                    ProgressView()
+                } else {
+                    Text(statusText(sensor.status))
+                        .font(.caption)
+                        .padding(6)
+                        .background(statusColor(sensor.status).opacity(0.1))
+                        .foregroundColor(statusColor(sensor.status))
+                        .cornerRadius(8)
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+        }
+        .padding(.horizontal)
+        .disabled(sensor.status == .Connecting)
     }
     
     private func statusColor(_ status: Status) -> Color {

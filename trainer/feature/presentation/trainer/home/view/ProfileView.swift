@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var authService: AuthenticationService
+    @EnvironmentObject var router: NavigationRouter
     @Binding var showProfile: Bool
     @State private var showLogoutAlert = false
 
@@ -25,6 +26,23 @@ struct ProfileView: View {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(Color.blue)
+                .cornerRadius(10)
+            }
+            .padding(.horizontal)
+
+            Button(action: {
+                presentationMode.wrappedValue.dismiss()
+                router.navigate(to: Route.stravaAuth)
+            }) {
+                HStack {
+                    Image(systemName: "link")
+                    Text("Strava Authentication")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.orange)
                 .cornerRadius(10)
             }
             .padding(.horizontal)

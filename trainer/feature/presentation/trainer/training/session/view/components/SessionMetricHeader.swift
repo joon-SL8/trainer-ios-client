@@ -12,15 +12,27 @@ struct SessionMetricHeader: View {
             let centerWidth = totalAvailableWidth * 0.40
             
             HStack(spacing: spacing) {
-                MetricBox(
-                    title: "Heart Rate",
-                    value: viewModel.currentHeartRateContent != nil ? String(format: "%.0f", Double(viewModel.currentHeartRateContent!.content.hrData)) : "--",
-                    unit: "BPM",
-                    isConnected: viewModel.currentHeartRateContent != nil,
-                    color: .red
-                )
+                // Left Column: Speed, Heart Rate
+                VStack(spacing: 8) {
+                    MetricBox(
+                        title: "Speed",
+                        value: viewModel.speed != nil ? String(format: "%.1f", viewModel.speed!) : "--",
+                        unit: "km/h",
+                        isConnected: viewModel.isPowerConnected,
+                        color: .green
+                    )
+                    
+                    MetricBox(
+                        title: "Heart Rate",
+                        value: viewModel.currentHeartRateContent != nil ? String(format: "%.0f", Double(viewModel.currentHeartRateContent!.content.hrData)) : "--",
+                        unit: "BPM",
+                        isConnected: viewModel.currentHeartRateContent != nil,
+                        color: .red
+                    )
+                }
                 .frame(width: sideWidth)
 
+                // Middle Column: Power, Total Time
                 VStack(spacing: 8) {
                     MetricBox(
                         title: "Power",
@@ -31,43 +43,36 @@ struct SessionMetricHeader: View {
                     )
                     
                     MetricBox(
-                        title: "Speed",
-                        value: viewModel.speed != nil ? String(format: "%.1f", viewModel.speed!) : "--",
-                        unit: "km/h",
-                        isConnected: viewModel.isPowerConnected, // Assuming power/speed connected together or need specific check
-                        color: .green
+                        title: "Total Time",
+                        value: formatTimeInterval(viewModel.elapsedTime),
+                        unit: "",
+                        isConnected: viewModel.workout != nil,
+                        color: .secondary
                     )
-
-                    HStack(spacing: 8) {
-                        MetricBox(
-                            title: "Time",
-                            value: formatTimeInterval(viewModel.elapsedTime),
-                            unit: "",
-                            isConnected: viewModel.workout != nil,
-                            color: .secondary
-                        )
-                        
-                        MetricBox(
-                            title: "Block",
-                            value: viewModel.formattedBlockProgress,
-                            unit: "",
-                            isConnected: viewModel.workout != nil,
-                            color: viewModel.currentBlockZoneColor,
-                            progress: viewModel.blockProgressPercentage
-                        )
-                    }
                 }
                 .frame(width: centerWidth)
 
-                MetricBox(
-                    title: "Cadence",
-                    value: viewModel.cadence != nil ? String(format: "%.0f", viewModel.cadence!) : "--",
-                    unit: "RPM",
-                    isConnected: viewModel.isCadenceConnected,
-                    color: .purple
-                )
-                .frame(width: sideWidth)
+                // Right Column: Cadence, Interval Time
+                VStack(spacing: 8) {
+                    MetricBox(
+                        title: "Cadence",
+                        value: viewModel.cadence != nil ? String(format: "%.0f", viewModel.cadence!) : "--",
+                        unit: "RPM",
+                        isConnected: viewModel.isCadenceConnected,
+                        color: .purple
+                    )
+                    
+                    MetricBox(
+                        title: "Interval",
+                        value: viewModel.formattedBlockProgress,
+                        unit: "",
+                        isConnected: viewModel.workout != nil,
+                        color: viewModel.currentBlockZoneColor,
+                        progress: viewModel.blockProgressPercentage
+                    )
                 }
+                .frame(width: sideWidth)
+            }
                 }
                 }
 
