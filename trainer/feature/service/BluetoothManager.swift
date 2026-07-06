@@ -76,9 +76,10 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     public let cscMeasurementCharacteristicUUID = CBUUID(string: "2A5B") // CSC Measurement Characteristic
     public let cpServiceUUID = CBUUID(string: "1818") // Cycling Power Service
     public let cpMeasurementCharacteristicUUID = CBUUID(string: "2A63") // Cycling Power Measurement Characteristic
+    public let fmcpCharacteristicUUID = CBUUID(string: "2AD9") // Fitness Machine Control Point
 
     private var serviceUUIDs: [CBUUID] {
-        var uuids: [CBUUID] = [heartRateServiceUUID, cscServiceUUID, cpServiceUUID] // Include new services
+        var uuids: [CBUUID] = [heartRateServiceUUID, cscServiceUUID, cpServiceUUID, CBUUID(string: "1826")] // Include Fitness Machine Service (1826)
         
         serviceTags.compactMap { tag in
             // Parse 16-bit UUID from 128-bit string as requested: char[4..7]
@@ -97,6 +98,19 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
         return uuids
     }
     
+    // ...
+    
+    public func writeToFMCP(data: Data, for peripheral: CBPeripheral) {
+        guard let service = peripheral.services?.first(where: { $0.uuid == CBUUID(string: "1826") }),
+              let characteristic = service.characteristics?.first(where: { $0.uuid == fmcpCharacteristicUUID }) else {
+            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
+            return
+        }
+        
+        print("BluetoothManager: Writing to FMCP: \(data.map { String(format: "%02hhx", $0) }.joined())")
+        peripheral.writeValue(data, for: characteristic, type: .withResponse)
+    }
+
     override init() {
         super.init()
         
@@ -244,6 +258,10 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
         for (_, peripheral) in connectedPeripherals {
             disconnect(from: peripheral)
         }
+    }
+    
+    public func getConnectedPeripherals() -> [UUID: CBPeripheral] {
+        return connectedPeripherals
     }
 
     // MARK: - CBCentralManagerDelegate (Connection)

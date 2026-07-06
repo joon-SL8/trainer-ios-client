@@ -11,8 +11,10 @@ public class SessionOrchestrator: ObservableObject {
     @Published public var sensorData: [UUID: String] = [:] // Placeholder for sensor data
     @Published public var currentHeartRateContent: HeartRateContent?
     @Published public var cscData: CSCData?
-    @Published public var cyclingPowerData: CyclingPowerData?
+    @Published public var cyclingPowerPacket: CyclingPowerMeasurementPacket?
     
+    private var lastTargetPower: Int?
+
     private(set) public var timer = SessionTimeDataTimer()
 
     public init(bluetoothManager: BluetoothManager) {
@@ -59,11 +61,11 @@ public class SessionOrchestrator: ObservableObject {
                 } else if characteristicUUID == self.bluetoothManager.cpMeasurementCharacteristicUUID {
                     // Cycling Power
                     print("SessionOrchestrator: Matched Cycling Power characteristic.")
-                    if let cpData = BluetoothDataParser.parseCyclingPower(from: data) {
-                        print("SessionOrchestrator: Received CP data from \(sensorId)")
-                        self.cyclingPowerData = cpData
-                        self.sensorData[sensorId] = "CP Data: \(cpData.instantaneousPower) W"
-                    }
+                    let byteArray = data.toByteArray() // Assuming extension exists
+                    let cpPacket = CyclingPowerMeasurementPacket.companion.fromPayload(data: byteArray)
+                    print("SessionOrchestrator: Received CP packet from \(sensorId)")
+                    self.cyclingPowerPacket = cpPacket
+                    self.sensorData[sensorId] = "CP: \(cpPacket.powerLevel) W"
                 } else {
                     let hexString = data.map { String(format: "%02hhx", $0) }.joined()
                     print("SessionOrchestrator: Received unknown data from \(sensorId) (\(characteristicUUID.uuidString)): \(hexString)")
@@ -73,9 +75,21 @@ public class SessionOrchestrator: ObservableObject {
             .store(in: &cancellables)
     }
 
+    private func sendFMCPCommand(_ command: Data) {
+        for (_, peripheral) in bluetoothManager.getConnectedPeripherals() {
+            bluetoothManager.writeToFMCP(data: command, for: peripheral)
+        }
+    }
+
+    public func updateTargetPower(power: Int) {
+        if lastTargetPower != power {
+            lastTargetPower = power
+            sendFMCPCommand(PowerControlCommands.getSetTargetPowerCommand(power: power))
+        }
+    }
+
     private func startDataCollection(for sensorId: UUID) {
         print("SessionOrchestrator: Start data collection for \(sensorId)")
-        // In a real implementation, you would call methods on the peripheral here.
     }
     
     private func stopDataCollection(for sensorId: UUID) {
@@ -89,16 +103,20 @@ public class SessionOrchestrator: ObservableObject {
     public func startSession(with workout: MRCWorkout) {
         sessionState = "Active"
         timer.request(action: Start.shared)
+        sendFMCPCommand(PowerControlCommands.getStartCommand())
     }
     
     public func pauseSession() {
         sessionState = "Paused"
         timer.request(action: Pause.shared)
+        sendFMCPCommand(PowerControlCommands.getPauseCommand())
     }
     
     public func stopSession() {
         sessionState = "Idle"
         timer.request(action: Stop.shared)
+        updateTargetPower(power: 0)
+        sendFMCPCommand(PowerControlCommands.getStopCommand())
     }
     
     public func cleanup() {

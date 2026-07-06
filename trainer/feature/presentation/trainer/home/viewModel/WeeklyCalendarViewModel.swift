@@ -1,5 +1,6 @@
-import SwiftUI
 import Combine
+import SwiftUI
+import libfitness
 
 class WeeklyCalendarViewModel: ObservableObject {
     @Published var currentWeek: [Date] = []
@@ -8,26 +9,80 @@ class WeeklyCalendarViewModel: ObservableObject {
     @Published var canNavigateForward: Bool = true
     @Published var canNavigateBackward: Bool = true
 
+    @Published var sessions: [Date: libfitness.Session] = [:]
+
     private var calendar = Calendar.current
     private let today = Date()
+    private let getSessionUseCase = GetSessionUseCase()
 
     init() {
-        calendar.firstWeekday = 1 // Sunday
-        updateWeek(for: today)
+        calendar.firstWeekday = 1  // Sunday
+        Task { await updateWeek(for: today) }
     }
 
-    func updateWeek(for date: Date) {
-        let startOfWeek = calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: date).date!
+    func updateWeek(for date: Date) async {
+        let startOfWeek = calendar.dateComponents(
+            [.calendar, .yearForWeekOfYear, .weekOfYear],
+            from: date
+        ).date!
         var week: [Date] = []
         for i in 0..<7 {
-            if let day = calendar.date(byAdding: .day, value: i, to: startOfWeek) {
+            if let day = calendar.date(
+                byAdding: .day,
+                value: i,
+                to: startOfWeek
+            ) {
                 week.append(day)
             }
         }
         self.currentWeek = week
         self.selectedDate = date
+
+        await fetchSessions(for: week)
+
         updateHeaderTitle(for: week[0])
         updateNavigationLimits(for: week[0])
+    }
+
+    private func fetchSessions(for week: [Date]) async {
+        guard let start = week.first, let end = week.last else { return }
+
+        // Fetch sessions for the week range
+        let input = GetSessionInfoInput(
+            name: nil,
+            dateFrom: KotlinLong(
+                value: Int64(start.timeIntervalSince1970 * 1000)
+            ),
+            dateTo: KotlinLong(value: Int64(end.timeIntervalSince1970 * 1000))
+        )
+
+        let fetched = try? await getSessionUseCase.invoke(input: input)
+
+        var newSessions: [Date: libfitness.Session] = [:]
+
+        if let sessionsList = fetched as? [libfitness.Session] {
+            for session in sessionsList {
+                let sessionDate = Date(
+                    timeIntervalSince1970: TimeInterval(session.sessionDate)
+                        / 1000.0
+                )
+                let startOfDay = calendar.startOfDay(for: sessionDate)
+                newSessions[startOfDay] = session
+            }
+        } else if let sessionsArray = fetched as? NSArray {
+            for case let session as libfitness.Session in sessionsArray {
+                let sessionDate = Date(
+                    timeIntervalSince1970: TimeInterval(session.sessionDate)
+                        / 1000.0
+                )
+                let startOfDay = calendar.startOfDay(for: sessionDate)
+                newSessions[startOfDay] = session
+            }
+        }
+        
+        await MainActor.run {
+            self.sessions = newSessions
+        }
     }
 
     private func updateHeaderTitle(for date: Date) {
@@ -38,29 +93,53 @@ class WeeklyCalendarViewModel: ObservableObject {
 
     private func updateNavigationLimits(for startOfWeek: Date) {
         // Limit: 3 months back
-        if let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: today),
-           let startOfThreeMonthsAgo = calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: threeMonthsAgo).date {
+        if let threeMonthsAgo = calendar.date(
+            byAdding: .month,
+            value: -3,
+            to: today
+        ),
+            let startOfThreeMonthsAgo = calendar.dateComponents(
+                [.calendar, .yearForWeekOfYear, .weekOfYear],
+                from: threeMonthsAgo
+            ).date
+        {
             self.canNavigateBackward = startOfWeek > startOfThreeMonthsAgo
         }
 
         // Limit: 2 weeks forward
-        if let twoWeeksFromNow = calendar.date(byAdding: .weekOfYear, value: 2, to: today),
-           let startOfTwoWeeksFromNow = calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: twoWeeksFromNow).date {
+        if let twoWeeksFromNow = calendar.date(
+            byAdding: .weekOfYear,
+            value: 2,
+            to: today
+        ),
+            let startOfTwoWeeksFromNow = calendar.dateComponents(
+                [.calendar, .yearForWeekOfYear, .weekOfYear],
+                from: twoWeeksFromNow
+            ).date
+        {
             self.canNavigateForward = startOfWeek < startOfTwoWeeksFromNow
         }
     }
 
     func navigateForward() {
         guard canNavigateForward else { return }
-        if let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: currentWeek[0]) {
-            updateWeek(for: nextWeek)
+        if let nextWeek = calendar.date(
+            byAdding: .weekOfYear,
+            value: 1,
+            to: currentWeek[0]
+        ) {
+            Task { await updateWeek(for: nextWeek) }
         }
     }
 
     func navigateBackward() {
         guard canNavigateBackward else { return }
-        if let lastWeek = calendar.date(byAdding: .weekOfYear, value: -1, to: currentWeek[0]) {
-            updateWeek(for: lastWeek)
+        if let lastWeek = calendar.date(
+            byAdding: .weekOfYear,
+            value: -1,
+            to: currentWeek[0]
+        ) {
+            Task { await updateWeek(for: lastWeek) }
         }
     }
 
@@ -77,9 +156,8 @@ class WeeklyCalendarViewModel: ObservableObject {
     }
 
     func hasActivity(on date: Date) -> Bool {
-        // Placeholder logic: Monday, Wednesday, Friday have activities
-        let weekday = calendar.component(.weekday, from: date)
-        return [2, 4, 6].contains(weekday) && !isFuture(date)
+        let startOfDay = calendar.startOfDay(for: date)
+        return sessions[startOfDay] != nil
     }
 
     func dayAbbreviation(for date: Date) -> String {

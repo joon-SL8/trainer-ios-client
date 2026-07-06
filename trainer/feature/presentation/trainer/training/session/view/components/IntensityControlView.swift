@@ -48,7 +48,7 @@ struct IntensityControlView: View {
 }
 
 #Preview {
-    IntensityControlView(viewModel: SessionViewModel(bluetoothManager: BluetoothManager()))
+    IntensityControlView(viewModel: SessionViewModel(sensors: [], workout: nil, mrcFilePath: nil, bluetoothManager: BluetoothManager()))
         .padding()
         .background(Color(.systemBackground))
 }

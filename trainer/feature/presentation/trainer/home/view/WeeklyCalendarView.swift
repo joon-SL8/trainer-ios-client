@@ -1,7 +1,9 @@
 import SwiftUI
+import libfitness
 
 struct WeeklyCalendarView: View {
     @StateObject private var viewModel = WeeklyCalendarViewModel()
+    @State private var showNoSessionError = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -10,6 +12,11 @@ struct WeeklyCalendarView: View {
         }
         .padding(.vertical, 10)
         .background(Color(.systemBackground))
+        .alert("No Session", isPresented: $showNoSessionError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("There is no session recorded for this day.")
+        }
     }
 
     private var headerView: some View {
@@ -53,9 +60,10 @@ struct WeeklyCalendarView: View {
         .padding(.horizontal)
     }
 
+    @ViewBuilder
     private func dayItem(for date: Date) -> some View {
-        VStack(spacing: 0) {
-            // Day and Date area (1/3 of total height)
+        let content = VStack(spacing: 0) {
+            // Day and Date area
             VStack(spacing: 4) {
                 Text(viewModel.dayAbbreviation(for: date))
                     .font(.caption2)
@@ -67,29 +75,47 @@ struct WeeklyCalendarView: View {
                     .fontWeight(viewModel.isToday(date) ? .bold : .regular)
                     .accessibilityIdentifier("calendarDayNumber_\(viewModel.dayNumber(for: date))")
             }
-            .frame(height: 29) // H_header (~66% of 44)
+            .frame(height: 29)
 
-            // Activity area (2/3 of total height)
+            // Activity area
             VStack {
                 if viewModel.hasActivity(on: date) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.caption) // Smaller icon for smaller area
+                        .font(.caption)
                         .foregroundColor(.green)
                         .accessibilityIdentifier("calendarActivityIcon_\(viewModel.dayNumber(for: date))")
                 } else {
                     Spacer()
                 }
             }
-            .frame(height: 58) // H_activity (~66% of 88)
+            .frame(height: 58)
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
+        .background(borderColor(for: date).opacity(0.05)) // Visual click region
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(borderColor(for: date), lineWidth: borderWidth(for: date))
         )
+        .contentShape(Rectangle()) // Ensure entire area is clickable
         .accessibilityIdentifier("calendarDayItem_\(viewModel.dayNumber(for: date))")
+
+        if let session = viewModel.sessions[Calendar.current.startOfDay(for: date)] {
+            NavigationLink(destination: CalendarView(session: session)) {
+                content
+            }
+            .buttonStyle(PlainButtonStyle())
+        } else {
+            Button(action: {
+                if Bool.random() {
+                    showNoSessionError = true
+                }
+            }) {
+                content
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
     }
 
     private func borderColor(for date: Date) -> Color {
