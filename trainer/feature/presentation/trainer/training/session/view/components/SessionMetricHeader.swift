@@ -73,12 +73,12 @@ struct SessionMetricHeader: View {
                 }
                 .frame(width: sideWidth)
             }
-                }
-                }
+        }
+    }
 
-                private func formatTimeInterval(_ interval: TimeInterval) -> String {
-                let minutes = Int(interval) / 60
-                let seconds = Int(interval) % 60
-                return String(format: "%02d:%02d", minutes, seconds)
-                }
+    private func formatTimeInterval(_ interval: TimeInterval) -> String {
+        let minutes = Int(interval) / 60
+        let seconds = Int(interval) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
 }

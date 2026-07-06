@@ -13,13 +13,11 @@ public struct WorkoutSessionRoute: Hashable {
         self.workoutFile = workoutFile
         self.workout = workout
     }
-
+    
     public func hash(into hasher: inout Hasher) {
         hasher.combine(sensors)
         hasher.combine(workoutFile)
         hasher.combine(workout?.id)
-        // MrcCourse is a class from libfitness, which inherits from NSObject (via libfitness).
-        // It provides pointer equality and hash by default.
         if let course = course {
             hasher.combine(ObjectIdentifier(course))
         } else {
@@ -32,5 +30,21 @@ public struct WorkoutSessionRoute: Hashable {
         lhs.course === rhs.course && 
         lhs.workoutFile == rhs.workoutFile &&
         lhs.workout?.id == rhs.workout?.id
+    }
+}
+
+public struct LibraryDetailRoute: Hashable {
+    public let workout: MRCWorkout
+
+    public init(workout: MRCWorkout) {
+        self.workout = workout
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(workout.id)
+    }
+
+    public static func == (lhs: LibraryDetailRoute, rhs: LibraryDetailRoute) -> Bool {
+        lhs.workout.id == rhs.workout.id
     }
 }

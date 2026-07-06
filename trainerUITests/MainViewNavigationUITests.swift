@@ -32,7 +32,7 @@ final class MainViewNavigationUITests: XCTestCase {
         }
         
         // Wait for MainView to appear by checking for Session button
-        XCTAssertTrue(app.buttons["sessionButton"].waitForExistence(timeout: 10), "Failed to bypass login and reach MainView")
+        XCTAssertTrue(app.buttons["randomSessionButton"].waitForExistence(timeout: 10), "Failed to bypass login and reach MainView")
     }
 
     func testExample() throws {
@@ -40,34 +40,24 @@ final class MainViewNavigationUITests: XCTestCase {
         // Handled in setUpWithError()
     }
 
-    func testSessionButtonNavigatesToSessionView() throws {
+    func testRandomSessionButtonNavigatesToSensorSelection() throws {
         bypassLogin()
         let app = XCUIApplication()
 
-        // Tap the Session button
-        app.buttons["sessionButton"].tap()
+        // Tap the Random Session button
+        app.buttons["randomSessionButton"].tap()
 
-        // Verify that the SessionView is displayed by checking for its title
-        XCTAssertTrue(app.staticTexts["Session"].waitForExistence(timeout: 10))
-    }
-
-    func testCalendarButtonNavigatesToCalendarView() throws {
-        bypassLogin()
-        let app = XCUIApplication()
-
-        // Tap the Calendar button
-        app.buttons["calendarButton"].tap()
-
-        // Verify that the CalendarView is displayed by checking for its title
-        XCTAssertTrue(app.staticTexts["Calendar"].waitForExistence(timeout: 10))
+        // Verify that the SensorSelectionView is displayed
+        XCTAssertTrue(app.staticTexts["Select Sensors"].waitForExistence(timeout: 10))
     }
 
     func testLibraryButtonNavigatesToLibraryView() throws {
         bypassLogin()
         let app = XCUIApplication()
 
-        // Tap the Library button
+        // Tap the Choose Workout button
         XCTAssertTrue(app.buttons["libraryButton"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.buttons["libraryButton"].label, "Choose Workout")
         app.buttons["libraryButton"].tap()
 
         // Verify that the LibraryView is displayed by checking for its title
@@ -89,18 +79,6 @@ final class MainViewNavigationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Session"].waitForExistence(timeout: 20))
     }
 
-    func testDeeplinkToCalendar() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["--uitesting", "--deeplink", "http://skjline.mobile/calendar"]
-        app.launch()
-        
-        bypassLogin()
-        
-        Thread.sleep(forTimeInterval: 5.0)
-        
-        XCTAssertTrue(app.staticTexts["Calendar"].waitForExistence(timeout: 20))
-    }
-
     func testDeeplinkToLibrary() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--uitesting", "--deeplink", "http://skjline.mobile/library"]
@@ -111,5 +89,14 @@ final class MainViewNavigationUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 5.0)
         
         XCTAssertTrue(app.staticTexts["Library"].waitForExistence(timeout: 20))
+    }
+
+    func testResetWorkoutButtonExists() throws {
+        bypassLogin()
+        let app = XCUIApplication()
+
+        // Verify that the Reset Workout button exists
+        XCTAssertTrue(app.buttons["resetWorkoutButton"].waitForExistence(timeout: 10))
+        app.buttons["resetWorkoutButton"].tap()
     }
 }

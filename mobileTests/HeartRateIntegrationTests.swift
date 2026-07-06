@@ -22,7 +22,7 @@ class HeartRateIntegrationTests: XCTestCase {
         super.setUpWithError()
         bluetoothManager = BluetoothManager()
         sessionOrchestrator = SessionOrchestrator(bluetoothManager: bluetoothManager)
-        sessionViewModel = SessionViewModel(bluetoothManager: bluetoothManager)
+        sessionViewModel = SessionViewModel(mrcFilePath: nil, bluetoothManager: bluetoothManager)
         cancellables = Set<AnyCancellable>()
     }
 

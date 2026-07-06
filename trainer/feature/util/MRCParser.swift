@@ -128,11 +128,12 @@ public class MRCParser {
         
         guard parts1.count >= 2, parts2.count >= 2 else { return nil }
         
-        guard let startMinutes = Double(parts1[0].replacingOccurrences(of: ",", with: ".")),
-              let endMinutes = Double(parts2[0].replacingOccurrences(of: ",", with: ".")),
-              let targetPower = Double(parts2[1].replacingOccurrences(of: ",", with: ".")) else { return nil }
+        guard let startPower = Double(parts1[1].replacingOccurrences(of: ",", with: ".")),
+              let startMinutes = Double(parts1[0].replacingOccurrences(of: ",", with: ".")),
+              let endPower = Double(parts2[1].replacingOccurrences(of: ",", with: ".")),
+              let endMinutes = Double(parts2[0].replacingOccurrences(of: ",", with: ".")) else { return nil }
         
-        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetStartPower: targetPower, targetEndPower: targetPower)
+        return MRCBlock(startTime: startMinutes, endTime: endMinutes, targetStartPower: startPower, targetEndPower: endPower)
     }
     
     public static func getRandomMRCFile() throws -> URL? {

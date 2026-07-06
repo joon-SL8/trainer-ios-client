@@ -9,7 +9,7 @@ struct SessionView: View {
     let workoutFile: String?
     
     init(sensors: [MockSensor] = [], course: MrcCourse? = nil, workoutFile: String? = nil, workout: MRCWorkout? = nil, bluetoothManager: BluetoothManager) {
-        _viewModel = StateObject(wrappedValue: SessionViewModel(sensors: sensors, workout: workout, bluetoothManager: bluetoothManager))
+        _viewModel = StateObject(wrappedValue: SessionViewModel(sensors: sensors, workout: workout, mrcFilePath: workoutFile, bluetoothManager: bluetoothManager))
         self.workoutFile = workoutFile
     }
     
@@ -50,7 +50,12 @@ struct SessionView: View {
                         // Right: Controls (Requirement 4.1.5)
                         VStack(alignment: .trailing, spacing: 0) {
                             SessionControlPanel(viewModel: viewModel) {
-                                navigationRouter.path.removeLast()
+                                if viewModel.state == .idle {
+                                    navigationRouter.path.removeLast()
+                                } else {
+                                    viewModel.stopSession()
+                                    viewModel.showSummaryModal = true
+                                }
                             }
                             .animation(.spring(), value: viewModel.state)
                             
@@ -80,6 +85,17 @@ struct SessionView: View {
                 .frame(width: max(0, geometry.size.width))
             }
         }
+        .sheet(isPresented: $viewModel.showSummaryModal) {
+            let metrics = viewModel.calculateSessionMetrics()
+            SessionSummaryModalView(
+                showModal: $viewModel.showSummaryModal,
+                averagePower: metrics.avgPower,
+                normalizedPower: metrics.np,
+                intensityFactor: metrics.ifFactor,
+                tss: metrics.tss,
+                powerValues: metrics.powerValues
+            )
+        }
         .navigationBarHidden(true)
         .statusBar(hidden: true)
         .onAppear {
@@ -107,6 +123,7 @@ struct SessionView: View {
 
         if let filename = workoutFile {
             if let mrcURL = try? MRCParser.findMRCFile(named: filename) {
+                print("opeing mrc file: \(mrcURL)")
                 viewModel.workout = try? MRCParser.parse(fileUrl: mrcURL)
             } else {
                 showFileError = true
@@ -118,6 +135,7 @@ struct SessionView: View {
     
     private func loadRandomWorkout() {
         if let mrcURL = try? MRCParser.getRandomMRCFile() {
+            print("opeing mrc file: \(mrcURL)")
             viewModel.workout = try? MRCParser.parse(fileUrl: mrcURL)
         }
     }

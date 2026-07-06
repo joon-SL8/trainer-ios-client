@@ -1,4 +1,5 @@
 import SwiftUI
+import libfitness
 
 struct ProfileView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -6,12 +7,33 @@ struct ProfileView: View {
     @EnvironmentObject var router: NavigationRouter
     @Binding var showProfile: Bool
     @State private var showLogoutAlert = false
+    
+    // New threshold state
+    @State private var pauseThreshold = "20"
+    private let getProfileUseCase = GetCustomProfileUseCase()
+    private let updateProfileUseCase = UpdateCustomProfileUseCase()
 
     var body: some View {
         VStack(spacing: 20) {
             Text("Menu")
                 .font(.largeTitle)
                 .padding(.top, 40)
+            
+            // New Setting
+            VStack(alignment: .leading) {
+                Text("Session Pause Threshold (s)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                TextField("20", text: $pauseThreshold)
+                    .keyboardType(.numberPad)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(5)
+                    .onChange(of: pauseThreshold) { newValue in
+                        updateProfileUseCase.invoke(input: UpdateCustomInput(key: "detect_pause", value: newValue))
+                    }
+            }
+            .padding(.horizontal)
 
             Button(action: {
                 presentationMode.wrappedValue.dismiss()
@@ -74,6 +96,13 @@ struct ProfileView: View {
             }
 
             Spacer()
+        }
+        .onAppear(perform: loadSettings)
+    }
+    
+    private func loadSettings() {
+        if let savedThreshold = getProfileUseCase.invoke(key: "detect_pause") {
+            pauseThreshold = savedThreshold
         }
     }
 }

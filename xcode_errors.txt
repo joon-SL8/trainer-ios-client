@@ -1,0 +1,8 @@
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftCompile normal arm64 /Users/mjlee-air/workspace/project/trainer/apps/ios/trainer/feature/presentation/trainer/training/library/view/LibraryDetailView.swift (in target 'trainer' from project 'trainer')
+	SwiftCompile normal arm64 Compiling\ LibraryDetailView.swift /Users/mjlee-air/workspace/project/trainer/apps/ios/trainer/feature/presentation/trainer/training/library/view/LibraryDetailView.swift (in target 'trainer' from project 'trainer')
+	Building project trainer with scheme trainer
+(3 failures)

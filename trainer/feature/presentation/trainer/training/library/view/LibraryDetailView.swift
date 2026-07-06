@@ -2,18 +2,28 @@ import SwiftUI
 import libfitness
 
 struct LibraryDetailView: View {
-    let file: AssetProperty
-    let directoryPath: String
+    let file: AssetProperty?
+    let directoryPath: String?
+    let workout: MRCWorkout?
+    
+    init(file: AssetProperty, directoryPath: String) {
+        self.file = file
+        self.directoryPath = directoryPath
+        self.workout = nil
+    }
+    
+    init(workout: MRCWorkout, filename: String) {
+        self.file = nil
+        self.directoryPath = nil
+        self.workout = workout
+    }
     
     @EnvironmentObject var libraryViewModel: LibraryViewModel
     @EnvironmentObject var bluetoothManager: BluetoothManager
     @EnvironmentObject var navigationRouter: NavigationRouter
     @EnvironmentObject var workoutSelectionViewModel: WorkoutSelectionViewModel
-    @State private var course: MrcCourse? = nil
-    @State private var workout: MRCWorkout? = nil
-    @State private var isBookmarked: Bool = false
-    @State private var isLoading: Bool = true
-    @State private var errorMessage: String? = nil
+    
+    @StateObject private var viewModel = LibraryDetailViewModel()
     
     @State private var showSensorSelection = false
     @State private var connectedSensors: [MockSensor] = []
@@ -25,142 +35,124 @@ struct LibraryDetailView: View {
     }
 
     var body: some View {
-        VStack {
-            if isLoading {
-                ProgressView("Parsing file...")
-            } else if let errorMessage = errorMessage {
-                VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 48))
-                        .foregroundColor(.orange)
-                    Text(errorMessage)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+        contentView
+            .overlay {
+                if libraryViewModel.isParsing {
+                    ParsingProgressModal(progress: libraryViewModel.parsingProgress) {
+                        libraryViewModel.cancelParsing()
+                    }
                 }
-                .foregroundColor(.secondary)
-            } else if let course = course {
-                let workout = MRCWorkout(from: course)
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        headerSection(course)
-                        
-                        Divider()
-                        
-                        detailsSection(course)
-                        
-                        if !course.description_.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Description")
-                                        .font(.headline)
-                                    Spacer()
-                                    playButton(course)
-                                    // viewRawButton(course)
-                                }
-                                Text(course.description_)
-                                    .font(.body)
-                            }
-                        } else {
-                            HStack {
-                                Text("Details")
-                                    .font(.headline)
-                                Spacer()
-                                playButton(course)
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Intervals")
-                                .font(.headline)
-                            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
-                                .frame(height: 200)
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Profile")
-                                .font(.headline)
-                            WorkoutHistogramView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
-                                .frame(height: 150)
+            }
+            .navigationTitle(workout?.name ?? (file?.data as? String ?? "Detail"))
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .fullScreenCover(isPresented: $showSensorSelection, onDismiss: {
+                if !connectedSensors.isEmpty {
+                    if let workout = workoutSelectionViewModel.workout {
+                        navigationRouter.path.append(WorkoutSessionRoute(sensors: connectedSensors, workout: workout))
+                        workoutSelectionViewModel.workout = nil
+                    }
+                }
+            }) {
+                SensorSelectionView(bluetoothManager: bluetoothManager, workout: workoutSelectionViewModel.workout, onComplete: { sensors, workout in
+                    self.connectedSensors = sensors
+                    self.workoutSelectionViewModel.workout = workout
+                })
+            }
+            .sheet(isPresented: $showBluetoothExplanation) {
+                BluetoothPermissionExplanationView(onDismiss: {
+                    showBluetoothExplanation = false
+                })
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        navigationRouter.navigateBack()
+                    }) {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if let filename = workout?.name ?? (file?.data as? String) {
+                        Button(action: {
+                            viewModel.toggleBookmark(filename: filename)
+                        }) {
+                            Image(systemName: viewModel.isBookmarked ? "bookmark.fill" : "bookmark")
+                                .foregroundColor(viewModel.isBookmarked ? .blue : .primary)
                         }
                     }
-                    .padding()
                 }
+            }
+            .onAppear {
+                if let workout = workout {
+                    viewModel.loadWorkout(workout, filename: workout.name)
+                } else if let file = file, let filename = file.data as? String {
+                    viewModel.parseFile(named: filename)
+                    viewModel.checkBookmarkStatus(filename: filename)
+                }
+            }
+            .onChange(of: libraryViewModel.parsedWorkout) { newValue in
+                if let workout = newValue {
+                    navigationRouter.path.append(WorkoutSessionRoute(sensors: connectedSensors, workout: workout))
+                    libraryViewModel.parsedWorkout = nil
+                }
+            }
+            .onChange(of: libraryViewModel.parsingError) { newValue in
+                if newValue != nil {
+                    showParsingErrorAlert = true
+                }
+            }
+            .alert("Parsing Failed", isPresented: $showParsingErrorAlert) {
+                Button("OK") {
+                    libraryViewModel.parsingError = nil
+                }
+            } message: {
+                Text(libraryViewModel.parsingError ?? "Unknown error")
+            }
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        VStack {
+            if viewModel.isLoading {
+                ProgressView("Parsing file...")
+            } else if let errorMessage = viewModel.errorMessage {
+                errorSection(errorMessage)
+            } else if let course = viewModel.course {
+                courseContent(course)
             } else {
                 Text("Failed to parse file content.")
                     .foregroundColor(.secondary)
             }
         }
-        .overlay {
-            if libraryViewModel.isParsing {
-                ParsingProgressModal(progress: libraryViewModel.parsingProgress) {
-                    libraryViewModel.cancelParsing()
-                }
-            }
+    }
+
+    @ViewBuilder
+    private func errorSection(_ errorMessage: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundColor(.orange)
+            Text(errorMessage)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
         }
-        .navigationTitle(file.data as? String ?? "Detail")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .fullScreenCover(isPresented: $showSensorSelection, onDismiss: {
-            if !connectedSensors.isEmpty {
-                // If a workout was chosen in LibraryDetailView and sensors connected,
-                // trigger the navigation with the workout through WorkoutSelectionViewModel
-                if let workout = workoutSelectionViewModel.workout {
-                    navigationRouter.path.append(WorkoutSessionRoute(sensors: connectedSensors, workout: workout))
-                    // Clear workout from ViewModel after use
-                    workoutSelectionViewModel.workout = nil
-                }
+        .foregroundColor(.secondary)
+    }
+
+    @ViewBuilder
+    private func courseContent(_ course: MrcCourse) -> some View {
+        let workout = MRCWorkout(from: course)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                headerSection(course)
+                Divider()
+                detailsSection(course)
+                descriptionSection(course)
+                intervalsSection(workout)
+                profileSection(workout)
             }
-        }) {
-            SensorSelectionView(bluetoothManager: bluetoothManager, workout: workoutSelectionViewModel.workout, onComplete: { sensors, workout in
-                self.connectedSensors = sensors
-                self.workoutSelectionViewModel.workout = workout // Update ViewModel's workout if changed in SensorSelectionView
-            })
-        }
-        .sheet(isPresented: $showBluetoothExplanation) {
-            BluetoothPermissionExplanationView(onDismiss: {
-                showBluetoothExplanation = false
-            })
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    navigationRouter.navigateBack()
-                }) {
-                    Image(systemName: "chevron.left")
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    toggleBookmark()
-                }) {
-                    Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
-                        .foregroundColor(isBookmarked ? .blue : .primary)
-                }
-            }
-        }
-        .onAppear {
-            parseFile()
-            checkBookmarkStatus()
-        }
-        .onChange(of: libraryViewModel.parsedWorkout) { newValue in
-            if let workout = newValue {
-                // Navigate to SessionView with the parsed workout
-                navigationRouter.path.append(WorkoutSessionRoute(sensors: connectedSensors, workout: workout))
-                // Reset for next time
-                libraryViewModel.parsedWorkout = nil
-            }
-        }
-        .onChange(of: libraryViewModel.parsingError) { newValue in
-            if newValue != nil {
-                showParsingErrorAlert = true
-            }
-        }
-        .alert("Parsing Failed", isPresented: $showParsingErrorAlert) {
-            Button("OK") {
-                libraryViewModel.parsingError = nil
-            }
-        } message: {
-            Text(libraryViewModel.parsingError ?? "Unknown error")
+            .padding()
         }
     }
 
@@ -181,8 +173,14 @@ struct LibraryDetailView: View {
     private func detailsSection(_ course: MrcCourse) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             detailRow(label: "Units", value: course.units)
-            detailRow(label: "Total Time", value: String(format: "%.1f mins", course.totalCourseTime()))
+            detailRow(label: "Total Time", value: TimeUtils.formatDuration(Double(course.totalCourseTime())))
             detailRow(label: "Data Points", value: "\(course.course.count)")
+            detailRow(label: "Training Stress Score", value: String(format: "%.1f", viewModel.tss))
+            HStack {
+                detailRow(label: "NP", value: String(format: "%.1fW", viewModel.np))
+                Spacer()
+                detailRow(label: "FTP", value: String(format: "%.1fW", viewModel.ftp))
+            }
         }
     }
 
@@ -196,72 +194,57 @@ struct LibraryDetailView: View {
         }
     }
 
-    private func parseFile() {
-        isLoading = true
-        errorMessage = nil
-
-        let fileName = file.data as? String ?? ""
-
-        do {
-            guard let url = try MRCParser.findMRCFile(named: fileName) else {
-                errorMessage = "File not found."
-                isLoading = false
-                return
+    @ViewBuilder
+    private func descriptionSection(_ course: MrcCourse) -> some View {
+        if !course.description_.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Description")
+                        .font(.headline)
+                    Spacer()
+                    playButton(course)
+                }
+                Text(course.description_)
+                    .font(.body)
             }
-
-            let content = try String(contentsOf: url, encoding: .utf8)
-            if content.isEmpty {
-                errorMessage = "File is empty or corrupted."
-                isLoading = false
-                return
-            }
-
-            let lines = content.components(separatedBy: .newlines)
-            let parser = AssetFileParseUseCase(file: fileName, lines: lines)
-            self.course = parser.invoke()
-            if let course = self.course {
-                self.workout = MRCWorkout(from: course)
-            }
-            if self.course == nil {
-                errorMessage = "Failed to parse file content."
-            }
-        } catch {
-            errorMessage = "File error: \(error.localizedDescription)"
-        }
-
-        isLoading = false
-    }
-
-    
-    private func checkBookmarkStatus() {
-        let bookmarkedPaths = UserDefaults.standard.stringArray(forKey: "bookmarked_assets") ?? []
-        isBookmarked = bookmarkedPaths.contains(file.data as? String ?? "")
-    }
-
-    private func toggleBookmark() {
-        let path = file.data as? String ?? ""
-        var bookmarkedPaths = UserDefaults.standard.stringArray(forKey: "bookmarked_assets") ?? []
-        
-        if isBookmarked {
-            bookmarkedPaths.removeAll { $0 == path }
         } else {
-            bookmarkedPaths.append(path)
+            HStack {
+                Text("Details")
+                    .font(.headline)
+                Spacer()
+                playButton(course)
+            }
         }
-        
-        UserDefaults.standard.set(bookmarkedPaths, forKey: "bookmarked_assets")
-        isBookmarked.toggle()
     }
-    
+
+    @ViewBuilder
+    private func intervalsSection(_ workout: MRCWorkout) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Intervals")
+                .font(.headline)
+            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
+                .frame(height: 200)
+        }
+    }
+
+    @ViewBuilder
+    private func profileSection(_ workout: MRCWorkout) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Profile")
+                .font(.headline)
+            WorkoutHistogramView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
+                .frame(height: 150)
+        }
+    }
+
     private func playButton(_ course: MrcCourse) -> some View {
         Button(action: {
-            print("LibraryDetailView: Play button clicked.")
             if isBluetoothUnavailable {
                 showBluetoothExplanation = true
             } else {
                 bluetoothManager.requestPermission()
                 workoutSelectionViewModel.workout = MRCWorkout(from: course)
                 workoutSelectionViewModel.showSensorSelection = true
-                print("LibraryDetailView: Sensor selection requested for \(course.filename). Navigating back.")
                 navigationRouter.navigateBack()
             }
         }) {
@@ -277,27 +260,5 @@ struct LibraryDetailView: View {
             .cornerRadius(20)
         }
         .accessibilityIdentifier("startSessionButton")
-    }
-    
-    private func viewRawButton(_ course: MrcCourse) -> some View {
-        Button(action: {
-            print("LibraryDetailView: View Raw button clicked for \(course.filename)")
-            do {
-                if let url = try MRCParser.findMRCFile(named: course.filename) {
-                    print("LibraryDetailView: Navigating to RawMRCView with path: \(url.path)")
-                    navigationRouter.navigate(to: RawMRCViewRoute(filePath: url.path))
-                }
-            } catch {
-                print("LibraryDetailView: Failed to resolve path for \(course.filename): \(error)")
-            }
-        }) {
-            Text("View Raw")
-                .fontWeight(.bold)
-                .foregroundColor(.blue)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(20)
-        }
     }
 }

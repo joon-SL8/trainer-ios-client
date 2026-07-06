@@ -15,6 +15,8 @@ struct MainView: View {
     @AppStorage("hasShownUnsupportedHardwareModal") private var hasShownUnsupportedHardwareModal = false
     @State private var showWorkoutSelectionModal = false
     @StateObject var workoutSelectionViewModel = WorkoutSelectionViewModel()
+    @StateObject var randomSessionViewModel = RandomSessionViewModel()
+    @StateObject var libraryViewModel = LibraryViewModel()
 
     private var isBluetoothUnavailable: Bool {
         if bluetoothManager.isMocking { return false }
@@ -33,6 +35,10 @@ struct MainView: View {
                     case .stravaAuth:
                         StravaAuthenticationView()
                     }
+                }
+                .navigationDestination(for: LibraryDetailRoute.self) { route in
+                    LibraryDetailView(workout: route.workout, filename: route.workout.name)
+                        .environmentObject(libraryViewModel)
                 }
                 .navigationDestination(for: WorkoutSessionRoute.self) { route in
                     SessionView(sensors: route.sensors, course: route.course, workoutFile: route.workoutFile, workout: route.workout, bluetoothManager: bluetoothManager)
@@ -86,8 +92,7 @@ struct MainView: View {
             VStack(spacing: 15) {
                 WeeklyCalendarView()
                     .padding(.bottom, 5)
-                sessionButton(geometry: geometry)
-                calendarButton(geometry: geometry)
+                RandomSessionButtonView(viewModel: randomSessionViewModel, workoutSelectionViewModel: workoutSelectionViewModel)
                 libraryButton(geometry: geometry)
                 Spacer()
             }
@@ -95,67 +100,35 @@ struct MainView: View {
         }
     }
 
-    private func sessionButton(geometry: GeometryProxy) -> some View {
-        Button(action: {
-            if bluetoothManager.isUnsupported {
-                // Already shown initial modal, banner is visible
-                return
-            }
-            if isBluetoothUnavailable {
-                showBluetoothExplanation = true
-            } else {
-                bluetoothManager.requestPermission()
-                showWorkoutSelectionModal = true
-            }
-        }) {
-            HStack {
-                Text("Session")
-                if isBluetoothUnavailable {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.yellow)
-                }
-            }
-            .frame(minHeight: geometry.size.height * 0.12)
-        }
-        .buttonStyle(VividButtonStyle(backgroundColor: .blue, isEnabled: !isBluetoothUnavailable))
-        .accessibilityIdentifier("sessionButton")
-    }
-
-    private func calendarButton(geometry: GeometryProxy) -> some View {
-        Button(action: {
-            navigationRouter.path.append("calendar")
-        }) {
-            HStack {
-                Image(systemName: "calendar")
-                    .font(.title2)
-                Text("Calendar")
-            }
-            .frame(minHeight: geometry.size.height * 0.12)
-        }
-        .buttonStyle(VividButtonStyle(backgroundColor: .green))
-        .accessibilityIdentifier("calendarButton")
-    }
-
     private func libraryButton(geometry: GeometryProxy) -> some View {
         Button(action: {
             navigationRouter.path.append("library")
         }) {
-            HStack {
-                Image(systemName: "books.vertical")
-                    .font(.title2)
-                Text("Library")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Choose Workout")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.orange)
+
+                Text("Browse and select from your personal library of workouts.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            .frame(minHeight: geometry.size.height * 0.12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.orange, lineWidth: 2)
+            )
+            .cornerRadius(10)
         }
-        .buttonStyle(VividButtonStyle(backgroundColor: .orange))
         .accessibilityIdentifier("libraryButton")
     }
 
     @ViewBuilder
     private func navigationDestinations(for value: String) -> some View {
         switch value {
-        case "calendar":
-            CalendarView()
         case "library":
             LibraryView()
                 .environmentObject(workoutSelectionViewModel)
@@ -216,8 +189,9 @@ struct MainView: View {
                     sensors = connectedSensors
                 }
                 navigationRouter.path.append(WorkoutSessionRoute(sensors: sensors, workoutFile: workoutFile))
-            case .calendar: navigationRouter.path.append("calendar")
             case .library: navigationRouter.path.append("library")
+            case .calendar:
+                navigationRouter.path.append("calendar")
             }
             // Clear the binding to prevent multiple triggers (e.g. if sheet dismiss causes re-appear)
             // But doing so in MainView itself should not trigger the 'clear stack' logic.

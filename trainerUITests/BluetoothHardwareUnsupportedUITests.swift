@@ -26,7 +26,7 @@ final class BluetoothHardwareUnsupportedUITests: XCTestCase {
         if bypassButton.waitForExistence(timeout: 10) {
             bypassButton.tap()
         }
-        XCTAssertTrue(app.buttons["sessionButton"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["randomSessionButton"].waitForExistence(timeout: 10))
     }
 
     func testUnsupportedHardwareModalAppearance() throws {
