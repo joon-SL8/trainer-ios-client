@@ -39,6 +39,7 @@ struct MainView: View {
                 .navigationDestination(for: LibraryDetailRoute.self) { route in
                     LibraryDetailView(workout: route.workout, filename: route.workout.name)
                         .environmentObject(libraryViewModel)
+                        .environmentObject(workoutSelectionViewModel)
                 }
                 .navigationDestination(for: WorkoutSessionRoute.self) { route in
                     SessionView(sensors: route.sensors, course: route.course, workoutFile: route.workoutFile, workout: route.workout, bluetoothManager: bluetoothManager)

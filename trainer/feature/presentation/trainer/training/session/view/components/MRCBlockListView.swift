@@ -3,7 +3,7 @@ import SwiftUI
 struct MRCBlockListView: View {
     let blocks: [MRCBlock]
     let elapsedTime: TimeInterval
-    let intensityFactor: Double
+    let ftp: Double
     var isStatic: Bool = false
     
     var body: some View {
@@ -12,14 +12,13 @@ struct MRCBlockListView: View {
                 VStack(spacing: 8) {
                     ForEach(blocks) { block in
                         let averagePower = (block.targetStartPower + block.targetEndPower) / 2.0
-                        let scaledTargetPower = averagePower * intensityFactor
+                        let scaledTargetPower = averagePower * ftp // Using FTP directly
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(formatDuration(block.startTime)) - \(formatDuration(block.endTime)) (\(formatDuration(block.endTime - block.startTime)))")
-                                    .font(.system(.caption, design: .monospaced))
-                                    .foregroundColor(.secondary)
-                                
-                                Text("\(Int(scaledTargetPower))% FTP")
+                                Text("\(formatDuration(block.endTime - block.startTime))")
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                Text("\(Int(scaledTargetPower)) W")
                                     .font(.subheadline)
                                     .fontWeight(.bold)
                             }
