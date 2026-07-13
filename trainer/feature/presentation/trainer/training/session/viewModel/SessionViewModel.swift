@@ -54,6 +54,8 @@ public class SessionViewModel: ObservableObject {
         return .blue
     }
     
+    @Published public var ftp: Double = 1.0
+    
     // Thresholds
     private var powerAboveThresholdStartTime: Date?
     private var powerBelowThresholdStartTime: Date?
@@ -67,6 +69,10 @@ public class SessionViewModel: ObservableObject {
         
         // Fetch threshold from profile
         let getProfileUseCase = GetCustomProfileUseCase()
+        if let ftpString = getProfileUseCase.invoke(key: "PROFILE_KEY_FTP") {
+            self.ftp = Double(ftpString) ?? 1.0
+        }
+
         if let thresholdString = getProfileUseCase.invoke(key: "detect_pause"),
            let duration = Double(thresholdString) {
             self.thresholdDuration = duration

@@ -14,6 +14,7 @@ class LibraryDetailViewModel: ObservableObject {
     @Published var ftp: Double = 0.0
 
     func loadWorkout(_ workout: MRCWorkout, filename: String) {
+        workout.process()
         self.workout = workout
         self.course = MRCCourseMapper.map(workout: workout)
         self.isLoading = false
@@ -43,7 +44,9 @@ class LibraryDetailViewModel: ObservableObject {
             let parser = AssetFileParseUseCase(file: fileName, lines: lines)
             self.course = parser.invoke()
             if let course = self.course {
-                self.workout = MRCWorkout(from: course)
+                let workout = MRCWorkout(from: course)
+                workout.process()
+                self.workout = workout
                 calculateMetrics()
             } else {
                 errorMessage = "Failed to parse file content."

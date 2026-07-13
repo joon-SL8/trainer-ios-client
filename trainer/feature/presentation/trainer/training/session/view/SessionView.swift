@@ -43,7 +43,7 @@ struct SessionView: View {
                         MRCBlockListView(
                             blocks: viewModel.workout?.blocks ?? [],
                             elapsedTime: viewModel.elapsedTime,
-                            intensityFactor: viewModel.intensityFactor
+                            ftp: viewModel.ftp
                         )
                         .frame(width: max(0, mainContentWidth * 0.35))
                         

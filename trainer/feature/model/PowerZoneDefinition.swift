@@ -38,3 +38,10 @@ public struct PowerZoneDefinition: Identifiable, Codable, Hashable {
         return allZones.first { $0.range.contains(percentage) } ?? allZones[0]
     }
 }
+
+extension PowerZoneDefinition {
+    public static func color(forPowerPercentage percentage: Double) -> Color {
+        let p = Int(percentage.rounded())
+        return zone(forPowerPercentage: p).swiftColor
+    }
+}

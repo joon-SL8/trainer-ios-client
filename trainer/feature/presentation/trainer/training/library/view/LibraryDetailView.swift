@@ -85,8 +85,10 @@ struct LibraryDetailView: View {
             }
             .onAppear {
                 if let workout = workout {
+                    print("LibraryDetailView: Loaded with workout: \(workout.name), blocks: \(workout.blocks)")
                     viewModel.loadWorkout(workout, filename: workout.name)
                 } else if let file = file, let filename = file.data as? String {
+                    print("LibraryDetailView: Parsing file: \(filename)")
                     viewModel.parseFile(named: filename)
                     viewModel.checkBookmarkStatus(filename: filename)
                 }
@@ -136,13 +138,29 @@ struct LibraryDetailView: View {
             Text(errorMessage)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+            
+            Button("Proceed anyway") {
+                // If we proceed, we should treat it as an empty workout, 
+                // or use a fallback if one exists in the view model.
+                // For now, let's create an empty workout as a placeholder.
+                let emptyWorkout = MRCWorkout(name: "Empty Workout", blocks: [])
+                viewModel.workout = emptyWorkout
+                viewModel.errorMessage = nil
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top)
         }
         .foregroundColor(.secondary)
     }
 
     @ViewBuilder
     private func courseContent(_ course: MrcCourse) -> some View {
-        let workout = MRCWorkout(from: course)
+        let workout = self.workout ?? viewModel.workout ?? {
+            let w = MRCWorkout(from: course)
+            w.process()
+            return w
+        }()
+        
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection(course)
@@ -172,9 +190,7 @@ struct LibraryDetailView: View {
 
     private func detailsSection(_ course: MrcCourse) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            detailRow(label: "Units", value: course.units)
             detailRow(label: "Total Time", value: TimeUtils.formatDuration(Double(course.totalCourseTime())))
-            detailRow(label: "Data Points", value: "\(course.course.count)")
             detailRow(label: "Training Stress Score", value: String(format: "%.1f", viewModel.tss))
             HStack {
                 detailRow(label: "NP", value: String(format: "%.1fW", viewModel.np))
@@ -222,7 +238,7 @@ struct LibraryDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Intervals")
                 .font(.headline)
-            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
+            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, ftp: viewModel.ftp, isStatic: true)
                 .frame(height: 200)
         }
     }
@@ -232,6 +248,9 @@ struct LibraryDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Profile")
                 .font(.headline)
+            // Use the same intensityFactor as MRCBlockListView for consistent coloring if applicable.
+            // Note: WorkoutHistogramView doesn't seem to support per-block zone colors natively,
+            // keeping it as is but note this limitation if the user requires per-zone colors in histogram.
             WorkoutHistogramView(blocks: workout.blocks, elapsedTime: 0, intensityFactor: 1.0, isStatic: true)
                 .frame(height: 150)
         }
@@ -243,7 +262,9 @@ struct LibraryDetailView: View {
                 showBluetoothExplanation = true
             } else {
                 bluetoothManager.requestPermission()
-                workoutSelectionViewModel.workout = MRCWorkout(from: course)
+                let workout = MRCWorkout(from: course)
+                workout.process()
+                workoutSelectionViewModel.workout = workout
                 workoutSelectionViewModel.showSensorSelection = true
                 navigationRouter.navigateBack()
             }
