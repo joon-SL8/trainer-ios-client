@@ -46,7 +46,7 @@ struct SessionControlPanel: View {
             }
             
             Button(action: {
-                viewModel.stopSession()
+                viewModel.pauseSession()
             }) {
                 VStack(spacing: 4) {
                     Image(systemName: "stop.fill")

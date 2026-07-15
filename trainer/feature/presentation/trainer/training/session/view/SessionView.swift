@@ -6,6 +6,7 @@ struct SessionView: View {
     @EnvironmentObject var bluetoothManager: BluetoothManager
     @StateObject private var viewModel: SessionViewModel
     @State private var showFileError = false
+    @State private var hasShownSummary: Bool = false
     let workoutFile: String?
     
     init(sensors: [MockSensor] = [], course: MrcCourse? = nil, workoutFile: String? = nil, workout: MRCWorkout? = nil, bluetoothManager: BluetoothManager) {
@@ -47,17 +48,37 @@ struct SessionView: View {
                         )
                         .frame(width: max(0, mainContentWidth * 0.35))
                         
-                        // Right: Controls (Requirement 4.1.5)
-                        VStack(alignment: .trailing, spacing: 0) {
-                            SessionControlPanel(viewModel: viewModel) {
-                                if viewModel.state == .idle {
-                                    navigationRouter.path.removeLast()
-                                } else {
-                                    viewModel.stopSession()
-                                    viewModel.showSummaryModal = true
+                        // Right: Controls
+                        VStack(alignment: .trailing, spacing: 20) {
+                            // Animated State Label
+                            Text({
+                                switch viewModel.state {
+                                case .idle: return "Prep"
+                                case .active: return "Ride On"
+                                case .paused: return "On a break"
+                                case .completed: return "Extra Mile"
                                 }
+                            }())
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(.blue)
+                                .transition(.scale.combined(with: .opacity))
+                                .animation(.easeInOut(duration: 0.5), value: viewModel.state)
+                            
+                            Spacer()
+                            
+                            // Exit Button
+                            Button(action: {
+                                viewModel.exitSession()
+                                navigationRouter.path.removeLast()
+                            }) {
+                                Text("Exit")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 32)
+                                    .background(Color.red)
+                                    .cornerRadius(10)
                             }
-                            .animation(.spring(), value: viewModel.state)
                             
                             Spacer()
                             
@@ -85,7 +106,14 @@ struct SessionView: View {
                 .frame(width: max(0, geometry.size.width))
             }
         }
-        .sheet(isPresented: $viewModel.showSummaryModal) {
+        .sheet(isPresented: Binding(
+            get: { viewModel.showSummaryModal && !hasShownSummary },
+            set: { show in viewModel.showSummaryModal = show }
+        ), onDismiss: {
+            if !viewModel.showSummaryModal {
+                viewModel.resumeTimerObservation()
+            }
+        }) {
             let metrics = viewModel.calculateSessionMetrics()
             SessionSummaryModalView(
                 showModal: $viewModel.showSummaryModal,
@@ -93,8 +121,20 @@ struct SessionView: View {
                 normalizedPower: metrics.np,
                 intensityFactor: metrics.ifFactor,
                 tss: metrics.tss,
-                powerValues: metrics.powerValues
+                powerValues: metrics.powerValues,
+                onContinue: {
+                    hasShownSummary = true
+                    viewModel.continueSession()
+                    viewModel.resumeTimerObservation()
+                },
+                onExit: {
+                    viewModel.exitSession()
+                    navigationRouter.path.removeLast()
+                }
             )
+            .onAppear {
+                viewModel.pauseTimerObservation()
+            }
         }
         .navigationBarHidden(true)
         .statusBar(hidden: true)
@@ -125,11 +165,13 @@ struct SessionView: View {
             if let mrcURL = try? MRCParser.findMRCFile(named: filename) {
                 print("opeing mrc file: \(mrcURL)")
                 viewModel.workout = try? MRCParser.parse(fileUrl: mrcURL)
+                viewModel.requestControl()
             } else {
                 showFileError = true
             }
         } else {
             loadRandomWorkout()
+            viewModel.requestControl()
         }
     }
     

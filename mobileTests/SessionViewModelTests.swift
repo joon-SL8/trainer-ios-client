@@ -22,14 +22,19 @@ final class SessionViewModelTests: XCTestCase {
     // As SessionViewModel logic depends on timer and orchestrator, 
     // real testing would require mocking those. For now, we test the logic we can.
     
-    func testThresholdLogic() {
-        // Since we can't easily inject the threshold duration from here,
-        // we test the behavior based on the default value.
-        // This requires significant refactoring to allow dependency injection
-        // of use cases and orchestrator.
+    func testSessionCompletionTriggersModal() {
+        let blocks = [MRCBlock(startTime: 0, endTime: 1, targetStartPower: 100, targetEndPower: 100)]
+        let workout = MRCWorkout(name: "Test Workout", blocks: blocks)
+        let viewModel = SessionViewModel(sensors: [], workout: workout, mrcFilePath: nil, bluetoothManager: bluetoothManager)
         
-        // As a minimal test, we instantiate it.
-        let viewModel = SessionViewModel(sensors: [], workout: nil, mrcFilePath: nil, bluetoothManager: bluetoothManager)
-        XCTAssertNotNil(viewModel)
+        // Mock session start
+        viewModel.startSession()
+        XCTAssertEqual(viewModel.state, .active)
+        
+        // Manually trigger completion
+        viewModel.completeSession()
+        
+        XCTAssertEqual(viewModel.state, .completed)
+        XCTAssertTrue(viewModel.showSummaryModal)
     }
 }

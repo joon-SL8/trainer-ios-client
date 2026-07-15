@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 public enum Route: Hashable {
-    case stravaAuth
+    case stravaAuth(workoutFile: String?, sessionId: String?)
 }
 
 public class NavigationRouter: ObservableObject {

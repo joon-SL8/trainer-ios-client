@@ -32,8 +32,8 @@ struct MainView: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     switch route {
-                    case .stravaAuth:
-                        StravaAuthenticationView()
+                    case .stravaAuth(let workoutFile, let sessionId):
+                        StravaAuthenticationView(workoutFile: workoutFile, sessionId: sessionId)
                     }
                 }
                 .navigationDestination(for: LibraryDetailRoute.self) { route in
@@ -71,10 +71,8 @@ struct MainView: View {
                     }
                 }
                 .onChange(of: workoutSelectionViewModel.showSensorSelection) { shouldShow in
-                    print("MainView: Detected workoutSelectionViewModel.showSensorSelection change to \(shouldShow)")
                     if shouldShow {
                         self.showSensorSelection = true
-                        print("MainView: Successfully triggered SensorSelectionView fullScreenCover.")
                     }
                 }
                 .onChange(of: workoutSelectionViewModel.showLibrary) { shouldShow in
@@ -177,19 +175,23 @@ struct MainView: View {
             case .main:
                 // Clearing the navigation stack takes us back to MainContent
                 navigationRouter.path.removeLast(navigationRouter.path.count)
-            case .session(let workoutFile):
-                var sensors: [MockSensor] = []
-                if bluetoothManager.isMocking && connectedSensors.isEmpty {
-                    // Provide default mock sensors for immediate session launch
-                    sensors = [
-                        MockSensor(name: "Mock HR", type: .HeartBeat, status: .Connected),
-                        MockSensor(name: "Mock Power", type: .Power, status: .Connected)
-                    ]
-                    connectedSensors = sensors
+            case .session(let workoutFile, let sessionId):
+                if let sessionId = sessionId {
+                    var sensors: [MockSensor] = []
+                    if bluetoothManager.isMocking && connectedSensors.isEmpty {
+                        // Provide default mock sensors for immediate session launch
+                        sensors = [
+                            MockSensor(name: "Mock HR", type: .HeartBeat, status: .Connected),
+                            MockSensor(name: "Mock Power", type: .Power, status: .Connected)
+                        ]
+                        connectedSensors = sensors
+                    } else {
+                        sensors = connectedSensors
+                    }
+                    navigationRouter.path.append(WorkoutSessionRoute(sensors: sensors, workoutFile: workoutFile, sessionId: sessionId))
                 } else {
-                    sensors = connectedSensors
+                    print("Deeplink: No sessionId provided, staying in MainView.")
                 }
-                navigationRouter.path.append(WorkoutSessionRoute(sensors: sensors, workoutFile: workoutFile))
             case .library: navigationRouter.path.append("library")
             case .calendar:
                 navigationRouter.path.append("calendar")

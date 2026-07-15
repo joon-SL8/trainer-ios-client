@@ -4,6 +4,9 @@ struct StravaAuthenticationView: View {
     @StateObject private var viewModel = StravaAuthenticationViewModel()
     @Environment(\.presentationMode) var presentationMode
     
+    let workoutFile: String?
+    let sessionId: String?
+    
     var body: some View {
         VStack(spacing: 0) {
             Text("Strava Authentication")
@@ -25,7 +28,7 @@ struct StravaAuthenticationView: View {
                 .padding(.horizontal, 48)
 
             Button(action: {
-                viewModel.authenticate()
+                viewModel.authenticate(workoutFile: workoutFile, sessionId: sessionId)
             }) {
                 Text("Authenticate")
                     .foregroundColor(.white)

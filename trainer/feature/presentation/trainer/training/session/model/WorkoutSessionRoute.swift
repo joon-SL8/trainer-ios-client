@@ -6,18 +6,21 @@ public struct WorkoutSessionRoute: Hashable {
     public let course: MrcCourse?
     public let workoutFile: String?
     public let workout: MRCWorkout?
+    public let sessionId: String?
 
-    public init(sensors: [MockSensor], course: MrcCourse? = nil, workoutFile: String? = nil, workout: MRCWorkout? = nil) {
+    public init(sensors: [MockSensor], course: MrcCourse? = nil, workoutFile: String? = nil, workout: MRCWorkout? = nil, sessionId: String? = nil) {
         self.sensors = sensors
         self.course = course
         self.workoutFile = workoutFile
         self.workout = workout
+        self.sessionId = sessionId
     }
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(sensors)
         hasher.combine(workoutFile)
         hasher.combine(workout?.id)
+        hasher.combine(sessionId)
         if let course = course {
             hasher.combine(ObjectIdentifier(course))
         } else {
@@ -29,7 +32,8 @@ public struct WorkoutSessionRoute: Hashable {
         lhs.sensors == rhs.sensors && 
         lhs.course === rhs.course && 
         lhs.workoutFile == rhs.workoutFile &&
-        lhs.workout?.id == rhs.workout?.id
+        lhs.workout?.id == rhs.workout?.id &&
+        lhs.sessionId == rhs.sessionId
     }
 }
 

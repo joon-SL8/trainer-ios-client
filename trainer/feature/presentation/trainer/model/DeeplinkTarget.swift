@@ -7,7 +7,7 @@
 
 enum DeeplinkTarget: Identifiable, Hashable {
     case main
-    case session(workoutFile: String? = nil)
+    case session(workoutFile: String? = nil, sessionId: String? = nil)
     case calendar
     case library
 

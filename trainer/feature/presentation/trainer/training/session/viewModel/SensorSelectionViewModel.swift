@@ -142,7 +142,6 @@ class SensorSelectionViewModel: ObservableObject {
         let bluetoothManager = self.bluetoothManager
         Task {
             bluetoothManager.stopScanning()
-            bluetoothManager.disconnectAll()
         }
     }
     
