@@ -117,7 +117,7 @@ public class SessionViewModel: ObservableObject {
                 self.power = Double(newPacket.powerLevel)
                 self.isPowerConnected = true
                 
-                self.handlePowerLogic()
+                Task { await self.handlePowerLogic() }
                 
                 if let lastPacket = self.lastCyclingPowerMeasurementPacket {
                     // Calculate RPM and Speed based on newPacket and lastPacket
@@ -138,7 +138,7 @@ public class SessionViewModel: ObservableObject {
         startObservingTimer()
     }
     
-    private func handlePowerLogic() {
+    private func handlePowerLogic() async {
         guard let currentPower = self.power else { return }
         let now = Date()
         
@@ -149,7 +149,7 @@ public class SessionViewModel: ObservableObject {
                 powerMatchStartTime = now
             } else if let startTime = powerMatchStartTime, now.timeIntervalSince(startTime) >= matchDuration {
                 if state == .idle {
-                    startSession()
+                    await startSession()
                 } else if state == .paused {
                     resumeSession()
                 }
@@ -230,13 +230,17 @@ public class SessionViewModel: ObservableObject {
         orchestrator.setCourseData(course: mrcCourse)
         orchestrator.startSession(with: workout)
         state = .active
-        
-        // Persist Session
-        let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: 0, mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionFilename: "")
-        self.currentSessionId = UpdateSessionUseCase().invoke(session: session)
-        
-        // Start periodic metrics recording
-        startMetricsRecording()
+
+        print("Recording session: \(workout.name)")
+
+        Task {
+            // Persist Session
+            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionFilename: "")
+            self.currentSessionId = await UpdateSessionUseCase().invoke(session: session)
+            
+            // Start periodic metrics recording
+            startMetricsRecording()
+        }
     }
     
     private func startMetricsRecording() {
@@ -249,6 +253,7 @@ public class SessionViewModel: ObservableObject {
     }
     
     private func recordMetrics() async {
+        print("Recording session metrics: \(currentSessionId)")
         guard let sessionId = currentSessionId else { return }
         
         let currentPower = power ?? 0
@@ -265,7 +270,7 @@ public class SessionViewModel: ObservableObject {
         // Collect metrics
         let entry = libfitness.SessionEntry(id: 0, session: sessionId, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(currentPower), heart: Int64(currentHeartRate), speed: Int64(currentSpeed), cadence: Int64(currentCadence))
         
-        UpdateSessionEntryUseCase().invoke(entry: entry)
+        await UpdateSessionEntryUseCase().invoke(entry: entry)
     }
     
     public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double]) {

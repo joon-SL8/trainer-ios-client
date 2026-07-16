@@ -47,17 +47,32 @@ class WeeklyCalendarViewModel: ObservableObject {
     private func fetchSessions(for week: [Date]) async {
         guard let start = week.first, let end = week.last else { return }
 
-        // Fetch sessions for the week range
+        // Fetch sessions for the full week range (inclusive of the entire start and end days)
+        let startOfDay = calendar.startOfDay(for: start)
+        // Adding 1 day to the last day to get the start of the day after the last day
+        let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end))!
+
         let input = GetSessionInfoInput(
             name: nil,
             dateFrom: KotlinLong(
-                value: Int64(start.timeIntervalSince1970 * 1000)
+                value: Int64(startOfDay.timeIntervalSince1970 * 1000)
             ),
-            dateTo: KotlinLong(value: Int64(end.timeIntervalSince1970 * 1000))
+            dateTo: KotlinLong(
+                value: Int64(startOfNextDay.timeIntervalSince1970 * 1000)
+            )
         )
 
-        let fetched = try? await getSessionUseCase.invoke(input: input)
+        let allResult = try? await GetAllSessionUseCase().invoke(input: GetAllInput())
+        var index = 0
+        var allSessions: [Int: libfitness.Session] = [:]
+        if let allSessionResult = allResult as? [libfitness.Session] {
+            for session in allSessionResult {
+                allSessions[index] = session
+                index += 1
+            }
+        }
 
+        let fetched = try? await getSessionUseCase.invoke(input: input)
         var newSessions: [Date: libfitness.Session] = [:]
 
         if let sessionsList = fetched as? [libfitness.Session] {

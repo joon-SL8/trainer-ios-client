@@ -103,7 +103,7 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     public func writeToFMCP(data: Data, for peripheral: CBPeripheral) {
         guard let service = peripheral.services?.first(where: { $0.uuid == CBUUID(string: "1826") }),
               let characteristic = service.characteristics?.first(where: { $0.uuid == fmcpCharacteristicUUID }) else {
-            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
+//            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
             return
         }
         
