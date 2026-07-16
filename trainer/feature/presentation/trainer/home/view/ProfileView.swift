@@ -54,7 +54,7 @@ struct ProfileView: View {
 
             Button(action: {
                 presentationMode.wrappedValue.dismiss()
-                router.navigate(to: Route.stravaAuth)
+                router.navigate(to: Route.stravaAuth(workoutFile: nil, sessionId: nil))
             }) {
                 HStack {
                     Image(systemName: "link")

@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 import SwiftUI
-
-import Foundation
-import Combine
-import SwiftUI
 import libfitness
 
 public class SessionViewModel: ObservableObject {
@@ -18,6 +14,12 @@ public class SessionViewModel: ObservableObject {
     @Published public var power: Double?
     @Published public var cadence: Double?
     @Published public var speed: Double?
+
+    // History for histograms
+    public private(set) var powerHistory: [Double] = []
+    public private(set) var heartRateHistory: [Double] = []
+    public private(set) var cadenceHistory: [Double] = []
+    public private(set) var speedHistory: [Double] = []
 
     @Published public var currentHeartRateContent: HeartRateContent? // Add this published property
     
@@ -56,11 +58,34 @@ public class SessionViewModel: ObservableObject {
     
     @Published public var ftp: Double = 1.0
     
+    @Published public var isPedaling: Bool = false
+    private var lowPowerStartTime: Date?
+    private let lowPowerDuration: TimeInterval = 5.0
+    private let powerThreshold: Double = 15.0
+    
     // Thresholds
-    private var powerAboveThresholdStartTime: Date?
-    private var powerBelowThresholdStartTime: Date?
-    private let thresholdPower: Double = 20.0
-    private let thresholdDuration: TimeInterval
+    private var powerMatchStartTime: Date?
+    private var pauseStartTime: Date?
+    private let matchDuration: TimeInterval = 3.0
+    private let pauseDuration: TimeInterval = 5.0
+    private let powerTolerance: Double = 5.0 // +/- 5 Watts
+
+    private func monitorPedalingForModal() {
+        guard state == .completed else { return }
+        
+        let currentPower = power ?? 0
+        
+        if currentPower < powerThreshold {
+            if lowPowerStartTime == nil {
+                lowPowerStartTime = Date()
+            } else if let startTime = lowPowerStartTime, Date().timeIntervalSince(startTime) >= lowPowerDuration {
+                showSummaryModal = true
+                lowPowerStartTime = nil // Reset
+            }
+        } else {
+            lowPowerStartTime = nil
+        }
+    }
 
     public init(sensors: [MockSensor] = [], workout: MRCWorkout? = nil, mrcFilePath: String? = nil, bluetoothManager: BluetoothManager) {
         self.workout = workout
@@ -71,13 +96,6 @@ public class SessionViewModel: ObservableObject {
         let getProfileUseCase = GetCustomProfileUseCase()
         if let ftpString = getProfileUseCase.invoke(key: "PROFILE_KEY_FTP") {
             self.ftp = Double(ftpString) ?? 1.0
-        }
-
-        if let thresholdString = getProfileUseCase.invoke(key: "detect_pause"),
-           let duration = Double(thresholdString) {
-            self.thresholdDuration = duration
-        } else {
-            self.thresholdDuration = 20.0 // Default 20 seconds
         }
         
         // Listen to orchestrator for connectivity updates (if needed, or map initial state)
@@ -93,12 +111,13 @@ public class SessionViewModel: ObservableObject {
         orchestrator.$cyclingPowerPacket
             .receive(on: RunLoop.main)
             .sink { [weak self] newPacket in
-                guard let self = self, let newPacket = newPacket else { return }
+                guard let self = self else { return }
+                guard let newPacket = newPacket else { return }
                 
                 self.power = Double(newPacket.powerLevel)
                 self.isPowerConnected = true
                 
-                self.handlePowerThresholdLogic()
+                Task { await self.handlePowerLogic() }
                 
                 if let lastPacket = self.lastCyclingPowerMeasurementPacket {
                     // Calculate RPM and Speed based on newPacket and lastPacket
@@ -112,33 +131,45 @@ public class SessionViewModel: ObservableObject {
                 }
                 
                 self.lastCyclingPowerMeasurementPacket = newPacket
+                self.monitorPedalingForModal()
             }
             .store(in: &cancellables)
             
         startObservingTimer()
     }
     
-    private func handlePowerThresholdLogic() {
-        guard let power = self.power else { return }
+    private func handlePowerLogic() async {
+        guard let currentPower = self.power else { return }
         let now = Date()
         
-        if power >= thresholdPower {
-            powerBelowThresholdStartTime = nil
-            if powerAboveThresholdStartTime == nil {
-                powerAboveThresholdStartTime = now
-            } else if let startTime = powerAboveThresholdStartTime, now.timeIntervalSince(startTime) >= thresholdDuration {
-                if state == .idle || state == .paused {
-                    startSession()
+        // Logic for Start/Resume
+        if let target = targetPower, abs(currentPower - target) <= powerTolerance {
+            pauseStartTime = nil // Reset pause timer if power matches target
+            if powerMatchStartTime == nil {
+                powerMatchStartTime = now
+            } else if let startTime = powerMatchStartTime, now.timeIntervalSince(startTime) >= matchDuration {
+                if state == .idle {
+                    await startSession()
+                } else if state == .paused {
+                    resumeSession()
                 }
+                powerMatchStartTime = nil // Reset after action
             }
         } else {
-            powerAboveThresholdStartTime = nil
-            if powerBelowThresholdStartTime == nil {
-                powerBelowThresholdStartTime = now
-            } else if let startTime = powerBelowThresholdStartTime, now.timeIntervalSince(startTime) >= thresholdDuration {
-                if state == .active {
+            powerMatchStartTime = nil // Reset if power doesn't match
+        }
+        
+        // Logic for Pause
+        if state == .active {
+            if currentPower <= 0 { // Assuming low/zero power means "not pedaling" or pause
+                if pauseStartTime == nil {
+                    pauseStartTime = now
+                } else if let startTime = pauseStartTime, now.timeIntervalSince(startTime) >= pauseDuration {
                     pauseSession()
+                    pauseStartTime = nil // Reset after action
                 }
+            } else {
+                pauseStartTime = nil // Reset if power is not low/zero
             }
         }
     }
@@ -156,6 +187,13 @@ public class SessionViewModel: ObservableObject {
     
     private func updateBlockProgress() {
         guard let workout = workout else { return }
+        
+        // Check for session completion
+        if let lastBlock = workout.blocks.last, (elapsedTime / 60.0) >= lastBlock.endTime {
+            completeSession()
+            return
+        }
+
         let currentMinutes = elapsedTime / 60.0
         if let currentBlock = workout.blocks.first(where: { currentMinutes >= $0.startTime && currentMinutes < $0.endTime }) {
             self.currentBlockElapsedTime = (currentMinutes - currentBlock.startTime) * 60.0
@@ -178,6 +216,13 @@ public class SessionViewModel: ObservableObject {
         }
     }
     
+    public func completeSession() {
+        state = .completed
+        metricsTimerTask?.cancel()
+        metricsTimerTask = nil
+        showSummaryModal = true
+    }
+    
     public func startSession() {
         guard let workout = workout else { return }
         // Map MRCWorkout to MrcCourse
@@ -185,13 +230,17 @@ public class SessionViewModel: ObservableObject {
         orchestrator.setCourseData(course: mrcCourse)
         orchestrator.startSession(with: workout)
         state = .active
-        
-        // Persist Session
-        let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: 0, mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionFilename: "")
-        self.currentSessionId = UpdateSessionUseCase().invoke(session: session)
-        
-        // Start periodic metrics recording
-        startMetricsRecording()
+
+        print("Recording session: \(workout.name)")
+
+        Task {
+            // Persist Session
+            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionFilename: "")
+            self.currentSessionId = await UpdateSessionUseCase().invoke(session: session)
+            
+            // Start periodic metrics recording
+            startMetricsRecording()
+        }
     }
     
     private func startMetricsRecording() {
@@ -204,17 +253,34 @@ public class SessionViewModel: ObservableObject {
     }
     
     private func recordMetrics() async {
+        print("Recording session metrics: \(currentSessionId)")
         guard let sessionId = currentSessionId else { return }
         
+        let currentPower = power ?? 0
+        let currentHeartRate = heartRate ?? 0
+        let currentSpeed = speed ?? 0
+        let currentCadence = cadence ?? 0
+
+        // Append to history
+        powerHistory.append(currentPower)
+        heartRateHistory.append(currentHeartRate)
+        cadenceHistory.append(currentCadence)
+        speedHistory.append(currentSpeed)
+
         // Collect metrics
-        let entry = libfitness.SessionEntry(id: 0, session: sessionId, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(power ?? 0), heart: Int64(heartRate ?? 0), speed: Int64(speed ?? 0), cadence: Int64(cadence ?? 0))
+        let entry = libfitness.SessionEntry(id: 0, session: sessionId, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(currentPower), heart: Int64(currentHeartRate), speed: Int64(currentSpeed), cadence: Int64(currentCadence))
         
-        UpdateSessionEntryUseCase().invoke(entry: entry)
+        await UpdateSessionEntryUseCase().invoke(entry: entry)
     }
     
     public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double]) {
-        // Placeholder implementation
-        return (150.0, 180.0, 0.75, 45.0, [100.0, 150.0, 200.0, 150.0, 100.0])
+        let avgPower = powerHistory.isEmpty ? 0 : powerHistory.reduce(0, +) / Double(powerHistory.count)
+        // NP, IF, TSS calculations would be more complex, keeping placeholders for now as per original
+        return (avgPower, 180.0, 0.75, 45.0, powerHistory)
+    }
+    
+    public func requestControl() {
+        orchestrator.requestControl()
     }
     
     public func pauseSession() {
@@ -222,12 +288,27 @@ public class SessionViewModel: ObservableObject {
         state = .paused
     }
     
-    public func stopSession() {
+    public func resumeSession() {
+        orchestrator.resumeSession()
+        state = .active
+    }
+    
+    public func pauseTimerObservation() {
+        timerTask?.cancel()
+        timerTask = nil
+    }
+
+    public func resumeTimerObservation() {
+        startObservingTimer()
+    }
+    
+    public func continueSession() {
+        showSummaryModal = false
+    }
+    
+    public func exitSession() {
         orchestrator.stopSession()
         state = .idle
-        elapsedTime = 0
-        currentSessionId = nil
-        metricsTimerTask?.cancel()
     }
     
     public var formattedBlockProgress: String {

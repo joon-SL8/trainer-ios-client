@@ -118,6 +118,8 @@ struct mobileApp: App {
                 self.bluetoothManager.isMocking = true
             }
             
+            let sessionId = queryItems.first(where: { $0.name == "sessionId" })?.value
+            
             if authService.isAuthenticated {
                 print("UI Testing: Authenticated, setting activeDeeplink for path: \(normalizedPath)")
                 DispatchQueue.main.async {
@@ -128,12 +130,12 @@ struct mobileApp: App {
                         if normalizedPath.starts(with: "/session/trainer/") {
                             let filename = normalizedPath.replacingOccurrences(of: "/session/trainer/", with: "")
                             if !filename.isEmpty {
-                                self.activeDeeplink = .session(workoutFile: filename)
+                                self.activeDeeplink = .session(workoutFile: filename, sessionId: sessionId)
                             } else {
-                                self.activeDeeplink = .session(workoutFile: nil)
+                                self.activeDeeplink = .session(workoutFile: nil, sessionId: sessionId)
                             }
                         } else {
-                            self.activeDeeplink = .session(workoutFile: nil)
+                            self.activeDeeplink = .session(workoutFile: nil, sessionId: sessionId)
                         }
                     } else if normalizedPath == "/calendar" {
                         self.activeDeeplink = .calendar

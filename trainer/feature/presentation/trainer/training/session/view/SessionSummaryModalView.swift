@@ -8,6 +8,8 @@ struct SessionSummaryModalView: View {
     let intensityFactor: Double
     let tss: Double
     let powerValues: [Double]
+    let onContinue: () -> Void
+    let onExit: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {
@@ -24,13 +26,51 @@ struct SessionSummaryModalView: View {
             .padding()
             
             // Histogram
-            // WorkoutHistogramView(powers: powerValues)
             Text("Histogram placeholder")
             
-            Button("Close") {
-                showModal = false
+            VStack(spacing: 8) {
+                Button(action: {
+                    // TODO: Implement Upload
+                }) {
+                    Text("Upload")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.blue, lineWidth: 2))
+                        .cornerRadius(10)
+                }
+                
+                Button(action: {
+                    onContinue()
+                }) {
+                    Text("Continue")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .cornerRadius(10)
+                }
+                
+                Button(action: {
+                    onExit()
+                }) {
+                    Text("Exit")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.red, lineWidth: 2))
+                        .cornerRadius(10)
+                }
             }
-            .padding()
+            .padding(.horizontal, 24)
         }
         .padding()
     }

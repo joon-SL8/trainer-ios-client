@@ -103,7 +103,7 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     public func writeToFMCP(data: Data, for peripheral: CBPeripheral) {
         guard let service = peripheral.services?.first(where: { $0.uuid == CBUUID(string: "1826") }),
               let characteristic = service.characteristics?.first(where: { $0.uuid == fmcpCharacteristicUUID }) else {
-            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
+//            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
             return
         }
         
@@ -334,7 +334,7 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let data = characteristic.value {
             let hexString = data.map { String(format: "%02hhx", $0) }.joined()
-            print("BluetoothManager: Received data from \(peripheral.name ?? "Unknown") (\(characteristic.uuid.uuidString)): \(hexString)")
+//            print("BluetoothManager: Received data from \(peripheral.name ?? "Unknown") (\(characteristic.uuid.uuidString)): \(hexString)")
             
             // Publish the raw data to allow Orchestrator to parse it correctly
             dataPublisher.send((peripheral.identifier, characteristic.uuid, data))

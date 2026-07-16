@@ -43,7 +43,6 @@ public class SessionOrchestrator: ObservableObject {
                 if characteristicUUID == self.bluetoothManager.heartRateMeasurementCharacteristicUUID {
                     // Heart Rate
                     if let heartRate = BluetoothDataParser.parseHeartRate(from: data) {
-                        print("SessionOrchestrator: Received Heart Rate: \(heartRate) BPM")
                         self.sensorData[sensorId] = String(heartRate)
                         let heartRateContent = HeartRateContent(content: HeartRatePacket(hrData: Int32(heartRate)))
                         self.currentHeartRateContent = heartRateContent
@@ -52,7 +51,6 @@ public class SessionOrchestrator: ObservableObject {
                     }
                 } else if characteristicUUID == self.bluetoothManager.cscMeasurementCharacteristicUUID {
                     // CSC
-                    print("SessionOrchestrator: Matched CSC characteristic.")
                     if let cscData = BluetoothDataParser.parseCSC(from: data) {
                         print("SessionOrchestrator: Received CSC data from \(sensorId)")
                         self.cscData = cscData
@@ -60,15 +58,12 @@ public class SessionOrchestrator: ObservableObject {
                     }
                 } else if characteristicUUID == self.bluetoothManager.cpMeasurementCharacteristicUUID {
                     // Cycling Power
-                    print("SessionOrchestrator: Matched Cycling Power characteristic.")
                     let byteArray = data.toByteArray() // Assuming extension exists
                     let cpPacket = CyclingPowerMeasurementPacket.companion.fromPayload(data: byteArray)
-                    print("SessionOrchestrator: Received CP packet from \(sensorId)")
                     self.cyclingPowerPacket = cpPacket
                     self.sensorData[sensorId] = "CP: \(cpPacket.powerLevel) W"
                 } else {
                     let hexString = data.map { String(format: "%02hhx", $0) }.joined()
-                    print("SessionOrchestrator: Received unknown data from \(sensorId) (\(characteristicUUID.uuidString)): \(hexString)")
                     self.sensorData[sensorId] = hexString
                 }
             }
@@ -81,8 +76,14 @@ public class SessionOrchestrator: ObservableObject {
         }
     }
 
+    public func requestControl() {
+        print("SessionOrchestrator: Requesting control from FMCP device.")
+        sendFMCPCommand(PowerControlCommands.getRequestControlCommand())
+    }
+
     public func updateTargetPower(power: Int) {
         if lastTargetPower != power {
+            print("SessionOrchestrator: Updating target power. Old: \(lastTargetPower ?? 0) W, New: \(power) W")
             lastTargetPower = power
             sendFMCPCommand(PowerControlCommands.getSetTargetPowerCommand(power: power))
         }
@@ -109,9 +110,15 @@ public class SessionOrchestrator: ObservableObject {
     public func pauseSession() {
         sessionState = "Paused"
         timer.request(action: Pause.shared)
-        sendFMCPCommand(PowerControlCommands.getPauseCommand())
+        sendFMCPCommand(PowerControlCommands.getStopCommand())
     }
-    
+
+    public func resumeSession() {
+        sessionState = "Active"
+        timer.request(action: Resume.shared)
+        sendFMCPCommand(PowerControlCommands.getStartCommand())
+    }
+
     public func stopSession() {
         sessionState = "Idle"
         timer.request(action: Stop.shared)
