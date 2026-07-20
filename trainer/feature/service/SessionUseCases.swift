@@ -7,18 +7,40 @@ public struct UpdateSessionUseCase {
     public func invoke(session: libfitness.Session) async -> Int64 {
         // Implementation calling libfitness database manager
         let input = InsertSessionInfoInput(data: session)
-        let result = try? await libfitness.UpdateSessionUseCase().invoke(input: input)
+        let result = try? await libfitness.UpdateSessionUseCase().invoke(input: input) as? UpdateSessionResult
+        return Int64(result?.id ?? 0)
+    }
+}
 
-        return 1 // Mock returning ID
+public struct GetSessionUseCase {
+    public init() {}
+    
+    public func invoke(input: GetSessionInfoInput) async -> [libfitness.Session] {
+        do {
+            let result = try await libfitness.GetSessionUseCase().invoke(input: input) as? GetSessionResult
+            return result?.sessions ?? []
+        } catch {
+            print("Error fetching sessions: \(error)")
+            return []
+        }
     }
 }
 
 public struct UpdateSessionEntryUseCase {
     public init() {}
-    
     public func invoke(entry: libfitness.SessionEntry) async {
         // Implementation calling libfitness database manager
         let input = InsertSessionEntryInput(data: entry)
-        let result = try? await libfitness.UpdateSessionEntryUseCase().invoke(input: input)
+        try? await libfitness.UpdateSessionEntryUseCase().invoke(input: input) as? UpdateSessionResult
+    }
+}
+
+public struct GetSessionEntryUseCase {
+    public init() {}
+    
+    public func invoke(sessionId: Int64) async -> GetSessionEntriesResult {
+        // Implementation calling libfitness database manager
+        let input = GetSessionEntryInput(sessionId: sessionId)
+        return try! await libfitness.GetSessionEntryUseCase().invoke(input: input) as! GetSessionEntriesResult
     }
 }
