@@ -30,16 +30,8 @@ struct CalendarListView: View {
                 Text(session.name)
                     .font(.headline)
                     .foregroundColor(.primary)
-//                Text("Total Time: \(formatDuration(session.totalTime))")
-//                    .font(.subheadline)
-//                    .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-//            .background(
-//                RoundedRectangle(cornerRadius: 10)
-//                    .stroke(Color.accentColor, lineWidth: 2)
-//                    .background(Color(.systemBackground).cornerRadius(10))
-//            )
         }
         .buttonStyle(PlainButtonStyle())
     }

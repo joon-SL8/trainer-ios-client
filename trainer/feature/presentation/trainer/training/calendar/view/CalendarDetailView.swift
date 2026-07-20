@@ -88,7 +88,7 @@ struct LineGraphView: View {
 
             GeometryReader { geometry in
                 if !data.isEmpty {
-                    let maxVal = data.max() ?? 1.0
+                    let maxVal = max(data.max() ?? 1.0, 1.0)
                     let scaleY = geometry.size.height / CGFloat(maxVal)
                     let avgY = geometry.size.height - (CGFloat(average) * scaleY)
                     let stepX = geometry.size.width / CGFloat(data.count - 1)

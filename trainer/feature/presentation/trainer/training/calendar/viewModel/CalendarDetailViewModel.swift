@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import libfitness
 
+@MainActor
 class CalendarDetailViewModel: ObservableObject {
     @Published var sessionEntries: [libfitness.SessionEntry] = []
     @Published var isLoading: Bool = false

@@ -63,9 +63,9 @@ class WeeklyCalendarViewModel: ObservableObject {
             )
         )
 
-        let fetched = (try! await getSessionUseCase.invoke(input: input)) as! GetSessionResult
+        let sessions = await getSessionUseCase.invoke(input: input)
         var history: [Date: libfitness.Session] = [:]
-        for session in fetched.sessions {
+        for session in sessions {
             let epoch = TimeInterval(session.sessionDate) / 1000.0
             let sessionDate = Date(timeIntervalSince1970: epoch)
             let startOfDay = calendar.startOfDay(for: sessionDate)
