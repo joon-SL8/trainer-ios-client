@@ -53,6 +53,7 @@ class WeeklyCalendarViewModel: ObservableObject {
         let startOfNextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end))!
 
         let input = GetSessionInfoInput(
+            id: nil,
             name: nil,
             dateFrom: KotlinLong(
                 value: Int64(startOfDay.timeIntervalSince1970 * 1000)
@@ -62,41 +63,18 @@ class WeeklyCalendarViewModel: ObservableObject {
             )
         )
 
-        let allResult = try? await GetAllSessionUseCase().invoke(input: GetAllInput())
-        var index = 0
-        var allSessions: [Int: libfitness.Session] = [:]
-        if let allSessionResult = allResult as? [libfitness.Session] {
-            for session in allSessionResult {
-                allSessions[index] = session
-                index += 1
-            }
-        }
-
-        let fetched = try? await getSessionUseCase.invoke(input: input)
-        var newSessions: [Date: libfitness.Session] = [:]
-
-        if let sessionsList = fetched as? [libfitness.Session] {
-            for session in sessionsList {
-                let sessionDate = Date(
-                    timeIntervalSince1970: TimeInterval(session.sessionDate)
-                        / 1000.0
-                )
-                let startOfDay = calendar.startOfDay(for: sessionDate)
-                newSessions[startOfDay] = session
-            }
-        } else if let sessionsArray = fetched as? NSArray {
-            for case let session as libfitness.Session in sessionsArray {
-                let sessionDate = Date(
-                    timeIntervalSince1970: TimeInterval(session.sessionDate)
-                        / 1000.0
-                )
-                let startOfDay = calendar.startOfDay(for: sessionDate)
-                newSessions[startOfDay] = session
-            }
+        let fetched = (try! await getSessionUseCase.invoke(input: input)) as! GetSessionResult
+        var history: [Date: libfitness.Session] = [:]
+        for session in fetched.sessions {
+            let epoch = TimeInterval(session.sessionDate) / 1000.0
+            let sessionDate = Date(timeIntervalSince1970: epoch)
+            let startOfDay = calendar.startOfDay(for: sessionDate)
+            
+            history[startOfDay] = session
         }
         
         await MainActor.run {
-            self.sessions = newSessions
+            self.sessions = history
         }
     }
 

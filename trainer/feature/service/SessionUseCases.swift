@@ -4,12 +4,18 @@ import libfitness
 public struct UpdateSessionUseCase {
     public init() {}
     
-    public func invoke(session: libfitness.Session) async -> Int64 {
+    public func invoke(session: libfitness.Session) async {
         // Implementation calling libfitness database manager
         let input = InsertSessionInfoInput(data: session)
-        let result = try? await libfitness.UpdateSessionUseCase().invoke(input: input)
+        try? await libfitness.UpdateSessionUseCase().invoke(input: input)
+    }
+}
 
-        return 1 // Mock returning ID
+public struct GetSessionUseCase {
+    public init() {}
+
+    public func invoke(input: GetSessionInfoInput) async -> GetSessionResult {
+        return try! await libfitness.GetSessionUseCase().invoke(input: input) as! GetSessionResult
     }
 }
 
@@ -20,5 +26,15 @@ public struct UpdateSessionEntryUseCase {
         // Implementation calling libfitness database manager
         let input = InsertSessionEntryInput(data: entry)
         let result = try? await libfitness.UpdateSessionEntryUseCase().invoke(input: input)
+    }
+}
+
+public struct GetSessionEntryUseCase {
+    public init() {}
+    
+    public func invoke(sessionId: Int64) async -> GetSessionEntriesResult {
+        // Implementation calling libfitness database manager
+        let input = GetSessionEntryInput(sessionId: sessionId)
+        return try! await libfitness.GetSessionEntryUseCase().invoke(input: input) as! GetSessionEntriesResult
     }
 }

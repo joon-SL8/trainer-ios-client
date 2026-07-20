@@ -101,8 +101,8 @@ struct WeeklyCalendarView: View {
         .contentShape(Rectangle()) // Ensure entire area is clickable
         .accessibilityIdentifier("calendarDayItem_\(viewModel.dayNumber(for: date))")
 
-        if let session = viewModel.sessions[Calendar.current.startOfDay(for: date)] {
-            NavigationLink(destination: CalendarView(session: session)) {
+        if viewModel.hasActivity(on: date) {
+            NavigationLink(destination: CalendarListView(date: date)) {
                 content
             }
             .buttonStyle(PlainButtonStyle())
