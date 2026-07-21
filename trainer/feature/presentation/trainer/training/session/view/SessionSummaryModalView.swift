@@ -8,6 +8,9 @@ struct SessionSummaryModalView: View {
     let intensityFactor: Double
     let tss: Double
     let powerValues: [Double]
+    let heartRateValues: [Double]
+    let cadenceValues: [Double]
+    let speedValues: [Double]
     let onContinue: () -> Void
     let onExit: () -> Void
     
@@ -25,8 +28,16 @@ struct SessionSummaryModalView: View {
             }
             .padding()
             
-            // Histogram
-            Text("Histogram placeholder")
+            // Histograms
+            ScrollView {
+                VStack(spacing: 16) {
+                    LineGraphView(title: "Power", data: powerValues)
+                    LineGraphView(title: "Heart Rate", data: heartRateValues)
+                    LineGraphView(title: "Cadence", data: cadenceValues)
+                    LineGraphView(title: "Speed", data: speedValues)
+                }
+                .padding(.horizontal, 24)
+            }
             
             VStack(spacing: 8) {
                 Button(action: {

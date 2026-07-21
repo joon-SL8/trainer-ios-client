@@ -221,6 +221,9 @@ public class SessionViewModel: ObservableObject {
         metricsTimerTask?.cancel()
         metricsTimerTask = nil
         showSummaryModal = true
+        
+        // Notify of session completion
+        SessionStore.shared.notifySessionCompleted()
     }
     
     public func startSession() {
@@ -275,10 +278,10 @@ public class SessionViewModel: ObservableObject {
         await UpdateSessionEntryUseCase().invoke(entry: entry)
     }
     
-    public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double]) {
+    public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double], heartRateValues: [Double], cadenceValues: [Double], speedValues: [Double]) {
         let avgPower = powerHistory.isEmpty ? 0 : powerHistory.reduce(0, +) / Double(powerHistory.count)
         // NP, IF, TSS calculations would be more complex, keeping placeholders for now as per original
-        return (avgPower, 180.0, 0.75, 45.0, powerHistory)
+        return (avgPower, 180.0, 0.75, 45.0, powerHistory, heartRateHistory, cadenceHistory, speedHistory)
     }
     
     public func requestControl() {

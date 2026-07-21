@@ -14,10 +14,19 @@ class WeeklyCalendarViewModel: ObservableObject {
     private var calendar = Calendar.current
     private let today = Date()
     private let getSessionUseCase = GetSessionUseCase()
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
         calendar.firstWeekday = 1  // Sunday
         Task { await updateWeek(for: today) }
+        
+        SessionStore.shared.$didUpdateSessions
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.updateWeek(for: self?.currentWeek.first ?? Date())
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func updateWeek(for date: Date) async {
