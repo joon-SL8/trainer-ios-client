@@ -162,6 +162,12 @@ class WeeklyCalendarViewModel: ObservableObject {
         return sessions[startOfDay] != nil
     }
 
+    func sessionStatus(for date: Date) -> SessionStatus? {
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let session = sessions[startOfDay] else { return nil }
+        return SessionStatus.status(for: session)
+    }
+
     func dayAbbreviation(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"

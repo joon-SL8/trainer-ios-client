@@ -238,7 +238,7 @@ public class SessionViewModel: ObservableObject {
 
         Task {
             // Persist Session
-            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionFilename: "")
+            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionPublished: 0, sessionFilename: "")
             let sessionId = await UpdateSessionUseCase().invoke(session: session)
             await MainActor.run {
                 self.currentSessionId = sessionId

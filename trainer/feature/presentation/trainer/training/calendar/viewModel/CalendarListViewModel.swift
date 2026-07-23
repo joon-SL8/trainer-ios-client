@@ -7,11 +7,54 @@ class CalendarListViewModel: ObservableObject {
     @Published var sessions: [libfitness.Session] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    
+    // Publish update event to trigger refresh in parent
+    let didUpdateSessions = PassthroughSubject<Void, Never>()
 
     private var calendar = Calendar.current
 
     let date: Date
     private let getSessionUseCase = GetSessionUseCase()
+    
+    // ... (keep init and loadSessions)
+
+    var needsUpload: Bool {
+        sessions.contains { SessionStatus.status(for: $0) != .synced }
+    }
+    
+    func uploadAll() {
+        Task {
+            isLoading = true
+            for session in sessions {
+                await processSession(session)
+            }
+            await loadSessions()
+            await MainActor.run {
+                self.isLoading = false
+                self.didUpdateSessions.send()
+            }
+        }
+    }
+    
+    func processSession(_ session: libfitness.Session) async {
+        let status = SessionStatus.status(for: session)
+        switch status {
+        case .needsProcessing:
+            // Implement fit-file generation
+            // ... (As per feat/fit-generate branch logic)
+            // Then proceed to upload
+            await upload(session)
+        case .needsUpload:
+            await upload(session)
+        case .synced:
+            break
+        }
+    }
+    
+    private func upload(_ session: libfitness.Session) async {
+        // Implement strava upload
+        // ... (As per feat/fit-generate branch logic)
+    }
 
     init(date: Date) {
         self.date = date
@@ -41,7 +84,7 @@ class CalendarListViewModel: ObservableObject {
 
             let fetchedSessions = await getSessionUseCase.invoke(input: input)
             
-            DispatchQueue.main.async {
+            await MainActor.run {
                 self.sessions = fetchedSessions
                 self.isLoading = false
             }

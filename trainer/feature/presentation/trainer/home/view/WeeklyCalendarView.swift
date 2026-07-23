@@ -79,10 +79,10 @@ struct WeeklyCalendarView: View {
 
             // Activity area
             VStack {
-                if viewModel.hasActivity(on: date) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.green)
+                if let status = viewModel.sessionStatus(for: date) {
+                    Circle()
+                        .fill(statusColor(for: status))
+                        .frame(width: 8, height: 8)
                         .accessibilityIdentifier("calendarActivityIcon_\(viewModel.dayNumber(for: date))")
                 } else {
                     Spacer()
@@ -115,6 +115,14 @@ struct WeeklyCalendarView: View {
                 content
             }
             .buttonStyle(PlainButtonStyle())
+        }
+    }
+
+    private func statusColor(for status: SessionStatus) -> Color {
+        switch status {
+        case .needsProcessing: return .red
+        case .needsUpload: return .yellow
+        case .synced: return .green
         }
     }
 
