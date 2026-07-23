@@ -122,6 +122,9 @@ struct SessionView: View {
                 intensityFactor: metrics.ifFactor,
                 tss: metrics.tss,
                 powerValues: metrics.powerValues,
+                heartRateValues: metrics.heartRateValues,
+                cadenceValues: metrics.cadenceValues,
+                speedValues: metrics.speedValues,
                 onContinue: {
                     hasShownSummary = true
                     viewModel.continueSession()
