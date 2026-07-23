@@ -1,0 +1,43 @@
+```mermaid
+graph TD
+    subgraph View ["Presentation Layer"]
+        WC[WeeklyCalendarView]
+        CL[CalendarListView]
+        CD[CalendarDetailView]
+    end
+
+    subgraph ViewModel ["ViewModel Layer"]
+        WCV[WeeklyCalendarViewModel]
+        CLV[CalendarListViewModel]
+        CDV[CalendarDetailViewModel]
+    end
+
+    subgraph Service ["Service Layer"]
+        SSS[SessionStatusService]
+        SO[SessionOrchestrator]
+    end
+
+    %% Status Flow
+    WC -->|Checks Status| WCV
+    WCV -->|Uses| SSS
+    SSS -->|Returns Status| WCV
+    WC -->|Displays Indicator| WC
+
+    %% Navigation Flow
+    WC -->|Click Session| CL
+    CL -->|Display Session| CD
+
+    %% Upload Flow - Bulk
+    CL -->|Click Upload All| CLV
+    CLV -->|Identifies Actions| SSS
+    CLV -->|Calls| SO
+    SO -->|Process & Upload| SO
+    SO -->|Refresh Data| CLV
+    CLV -->|Update| WC
+
+    %% Upload Flow - Single
+    CD -->|Click Upload| CDV
+    CDV -->|Calls| SO
+    SO -->|Process & Upload| SO
+    SO -->|Refresh Data| CDV
+```
