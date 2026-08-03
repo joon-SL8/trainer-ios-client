@@ -7,15 +7,15 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "832E1F05-C404-4F67-B82D-20331755E0C1"
-            shouldBeEnabled = "Yes"
+            uuid = "5A2B0F83-DB15-4A4B-9B05-F8B785251FE0"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "trainer/feature/presentation/entry/registration/RegistrationProfileView.swift"
+            filePath = "trainer/feature/presentation/trainer/training/session/view/SessionView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "100"
-            endingLineNumber = "100"
+            startingLineNumber = "49"
+            endingLineNumber = "49"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>

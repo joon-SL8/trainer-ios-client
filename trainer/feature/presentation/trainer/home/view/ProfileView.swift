@@ -30,7 +30,9 @@ struct ProfileView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(5)
                     .onChange(of: pauseThreshold) { newValue in
-                        updateProfileUseCase.invoke(input: UpdateCustomInput(key: "detect_pause", value: newValue))
+                        Task {
+                            _ = try? await updateProfileUseCase.invoke(input: UpdateCustomInput(key: "detect_pause", value: newValue))
+                        }
                     }
             }
             .padding(.horizontal)
@@ -101,8 +103,12 @@ struct ProfileView: View {
     }
     
     private func loadSettings() {
-        if let savedThreshold = getProfileUseCase.invoke(key: "detect_pause") {
-            pauseThreshold = savedThreshold
+        Task {
+            if let savedThreshold = await getProfileUseCase.invoke(key: "detect_pause") {
+                await MainActor.run {
+                    pauseThreshold = savedThreshold
+                }
+            }
         }
     }
 }

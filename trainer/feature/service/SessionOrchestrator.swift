@@ -14,6 +14,7 @@ public class SessionOrchestrator: ObservableObject {
     @Published public var cyclingPowerPacket: CyclingPowerMeasurementPacket?
     
     private var lastTargetPower: Int?
+    private var observedSensors = Set<UUID>()
 
     private(set) public var timer = SessionTimeDataTimer()
 
@@ -90,11 +91,20 @@ public class SessionOrchestrator: ObservableObject {
     }
 
     private func startDataCollection(for sensorId: UUID) {
+        if observedSensors.contains(sensorId) {
+            print("SessionOrchestrator: Skipping redundant data collection for \(sensorId)")
+            return
+        }
         print("SessionOrchestrator: Start data collection for \(sensorId)")
+        observedSensors.insert(sensorId)
     }
     
     private func stopDataCollection(for sensorId: UUID) {
+        if !observedSensors.contains(sensorId) {
+            return
+        }
         print("SessionOrchestrator: Stop data collection for \(sensorId)")
+        observedSensors.remove(sensorId)
     }
     
     public func setCourseData(course: MrcCourse) {

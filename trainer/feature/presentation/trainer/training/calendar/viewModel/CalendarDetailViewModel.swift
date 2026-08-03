@@ -39,9 +39,15 @@ class CalendarDetailViewModel: ObservableObject {
         Task {
             await MainActor.run { isUploading = true }
             
-            // TODO: Call processing/upload logic
-            
-            await MainActor.run { isUploading = false }
+            do {
+                try await SessionUploadService().uploadSession(sessionId: session.id, sessionTimestamp: session.sessionDate)
+                
+                await MainActor.run { isUploading = false }
+            } catch {
+                // Handle error
+                print("Error uploading session: \(error)")
+                await MainActor.run { isUploading = false }
+            }
         }
     }
     
@@ -49,11 +55,13 @@ class CalendarDetailViewModel: ObservableObject {
         isLoading = true
         
         Task {
-            let entries = await getSessionEntryUseCase.invoke(sessionId: session.id)
-            
-            DispatchQueue.main.async {
-                self.sessionEntries = entries.entries
-                self.isLoading = false
+            let input = GetSessionEntryInput(sessionId: session.id)
+            let result = try? await GetSessionEntryUseCase().invoke(input: input) as? GetSessionEntriesResult
+            if (result != nil && result!.entries.count > 0) {
+                DispatchQueue.main.async {
+                    self.sessionEntries = result?.entries ?? []
+                    self.isLoading = false
+                }
             }
         }
     }

@@ -90,6 +90,23 @@ struct mobileApp: App {
         // Small delay to ensure the app is ready to handle state changes
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             print("UI Testing: Processing deeplink: \(url)")
+            
+            // Check for pending auth context if this is just our app's base URL
+            var workoutFile: String? = nil
+            var sessionId: String? = nil
+            
+            if url.scheme == "trainer" && (url.host == nil || url.host == "") {
+                let defaults = UserDefaults.standard
+                workoutFile = defaults.string(forKey: "StravaAuth_WorkoutFile")
+                sessionId = defaults.string(forKey: "StravaAuth_SessionId")
+                
+                // Clear the persistence
+                defaults.removeObject(forKey: "StravaAuth_WorkoutFile")
+                defaults.removeObject(forKey: "StravaAuth_SessionId")
+                
+                print("UI Testing: Retrieved persisted auth context: workoutFile=\(workoutFile ?? "nil"), sessionId=\(sessionId ?? "nil")")
+            }
+
             guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
                 return
             }
@@ -118,25 +135,22 @@ struct mobileApp: App {
                 self.bluetoothManager.isMocking = true
             }
             
-            let sessionId = queryItems.first(where: { $0.name == "sessionId" })?.value
+            // Use sessionId from URL if present, otherwise fallback to persisted one
+            let urlSessionId = queryItems.first(where: { $0.name == "sessionId" })?.value
+            let finalSessionId = urlSessionId ?? sessionId
             
             if authService.isAuthenticated {
                 print("UI Testing: Authenticated, setting activeDeeplink for path: \(normalizedPath)")
                 DispatchQueue.main.async {
                     if normalizedPath == "/main" {
                         self.activeDeeplink = .main
-                    } else if normalizedPath.starts(with: "/session") {
-                        // Check for skjline://session/trainer/path/to/file.mrc
-                        if normalizedPath.starts(with: "/session/trainer/") {
-                            let filename = normalizedPath.replacingOccurrences(of: "/session/trainer/", with: "")
-                            if !filename.isEmpty {
-                                self.activeDeeplink = .session(workoutFile: filename, sessionId: sessionId)
-                            } else {
-                                self.activeDeeplink = .session(workoutFile: nil, sessionId: sessionId)
-                            }
-                        } else {
-                            self.activeDeeplink = .session(workoutFile: nil, sessionId: sessionId)
-                        }
+                    } else if normalizedPath.starts(with: "/session") || (workoutFile != nil) {
+                        // If path is root or explicitly /session, use persisted or provided file
+                        let finalWorkoutFile = (normalizedPath.starts(with: "/session/trainer/")) 
+                            ? normalizedPath.replacingOccurrences(of: "/session/trainer/", with: "") 
+                            : workoutFile
+                        
+                        self.activeDeeplink = .session(workoutFile: finalWorkoutFile, sessionId: finalSessionId)
                     } else if normalizedPath == "/calendar" {
                         self.activeDeeplink = .calendar
                     } else if normalizedPath == "/library" {
