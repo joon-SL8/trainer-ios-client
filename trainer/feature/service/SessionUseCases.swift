@@ -35,12 +35,16 @@ public struct UpdateSessionEntryUseCase {
     }
 }
 
-public struct GetSessionEntryUseCase {
+public struct PackDataRowUseCase {
     public init() {}
-    
-    public func invoke(sessionId: Int64) async -> GetSessionEntriesResult {
-        // Implementation calling libfitness database manager
-        let input = GetSessionEntryInput(sessionId: sessionId)
-        return try! await libfitness.GetSessionEntryUseCase().invoke(input: input) as! GetSessionEntriesResult
+    public func invoke(sessionId: Int64, timestampStart: Int64, rows: [libfitness.SessionEntry]) async throws -> Any {
+        return try await libfitness.PackDataRowUseCase().invoke(sessionId: sessionId, timestampStart: timestampStart, rows: rows)
+    }
+}
+
+public struct PublishSessionActivityUseCase {
+    public init() {}
+    public func invoke(filename: String) async throws {
+        // FIXME: Implement publishing
     }
 }

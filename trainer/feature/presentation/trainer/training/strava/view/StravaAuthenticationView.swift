@@ -1,12 +1,19 @@
 import SwiftUI
 
 struct StravaAuthenticationView: View {
-    @StateObject private var viewModel = StravaAuthenticationViewModel()
+    @StateObject private var viewModel: StravaAuthenticationViewModel
+    @EnvironmentObject private var router: NavigationRouter
     @Environment(\.presentationMode) var presentationMode
-    
+
     let workoutFile: String?
     let sessionId: String?
-    
+
+    init(workoutFile: String?, sessionId: String?, router: NavigationRouter) {
+        self.workoutFile = workoutFile
+        self.sessionId = sessionId
+        _viewModel = StateObject(wrappedValue: StravaAuthenticationViewModel(router: router))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Text("Strava Authentication")

@@ -33,7 +33,7 @@ struct MainView: View {
                 .navigationDestination(for: Route.self) { route in
                     switch route {
                     case .stravaAuth(let workoutFile, let sessionId):
-                        StravaAuthenticationView(workoutFile: workoutFile, sessionId: sessionId)
+                        StravaAuthenticationView(workoutFile: workoutFile, sessionId: sessionId, router: navigationRouter)
                     }
                 }
                 .navigationDestination(for: LibraryDetailRoute.self) { route in

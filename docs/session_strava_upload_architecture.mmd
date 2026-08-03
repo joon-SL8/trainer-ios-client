@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant UI as View/ViewModel
+    participant SUS as SessionUploadService
+    participant SUC as SessionUseCases
+    participant LIB as libfitness SDK
+    participant STRAVA as Strava Service
+
+    UI->>SUS: uploadSession(sessionId)
+    SUS->>SUC: GetSessionEntryUseCase.invoke(sessionId)
+    SUC->>LIB: Fetch entries
+    LIB-->>SUC: Return entries
+    SUC-->>SUS: Return entries
+    SUS->>SUC: PackDataRowUseCase.invoke(sessionId, timestamp, entries)
+    SUC->>LIB: Pack data
+    LIB-->>SUC: Return packed data
+    SUC-->>SUS: Return packed data
+    SUS->>SUC: PublishSessionActivityUseCase.invoke(filename)
+    SUC->>LIB: Upload to Strava
+    LIB->>STRAVA: Activity API
+    STRAVA-->>LIB: Success
+    LIB-->>SUC: Success
+    SUC-->>SUS: Success
+    SUS-->>UI: Success

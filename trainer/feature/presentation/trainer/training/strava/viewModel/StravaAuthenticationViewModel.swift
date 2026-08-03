@@ -6,39 +6,40 @@ import libfitness
 class StravaAuthenticationViewModel: ObservableObject {
     @Published var isAuthenticating: Bool = false
     @Published var errorMessage: String?
+    private var cancellables = Set<AnyCancellable>()
+    private let router: NavigationRouter
+
+    init(router: NavigationRouter) {
+        self.router = router
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                self?.resetAuthenticationState()
+            }
+            .store(in: &cancellables)
+    }
+
+    func resetAuthenticationState() {
+        if isAuthenticating {
+            print("Resetting Strava authentication state")
+            isAuthenticating = false
+        }
+    }
 
     func authenticate(workoutFile: String? = nil, sessionId: String? = nil) {
         print("Strava authentication starting...")
         isAuthenticating = true
         errorMessage = nil
 
-        // Define your app's deeplink scheme/path
-        var components = URLComponents()
-        components.scheme = "trainer"
-        components.host = "session"
-        
-        var queryItems = [URLQueryItem]()
-        if let workoutFile = workoutFile {
-            components.path = "/trainer/\(workoutFile)"
-        }
-        
-        if let sessionId = sessionId {
-            queryItems.append(URLQueryItem(name: "sessionId", value: sessionId))
-        }
-        
-        if !queryItems.isEmpty {
-            components.queryItems = queryItems
-        }
-        
-        let deeplink = components.url?.absoluteString ?? "trainer://session"
+        // Persist context to storage
+        let defaults = UserDefaults.standard
+        defaults.set(workoutFile, forKey: "StravaAuth_WorkoutFile")
+        defaults.set(sessionId, forKey: "StravaAuth_SessionId")
+
+        let deeplink = "trainer"
+        print("Strava authentication triggered with deeplink: \(deeplink)")
 
         // Use the updated library method to get the Authorize object with deeplink
         let stravaAuthorize = Authorize_iosKt.getStravaAuthorize(deeplink: deeplink)
-
-        // Trigger the authentication process
-        stravaAuthorize.authenticate()
-
-        print("Strava authentication triggered with deeplink: \(deeplink)")
+        try? stravaAuthorize.authenticate()
     }
 }
-

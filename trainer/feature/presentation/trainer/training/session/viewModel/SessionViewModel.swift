@@ -31,11 +31,14 @@ public class SessionViewModel: ObservableObject {
     private let orchestrator: SessionOrchestrator
     private var cancellables = Set<AnyCancellable>()
     private var timerTask: Task<Void, Never>?
+    private let uploadService = SessionUploadService()
     
     @Published public var isHRConnected: Bool = false
     @Published public var isPowerConnected: Bool = false
     @Published public var isCadenceConnected: Bool = false
     @Published public var showSummaryModal: Bool = false
+    @Published public var isUploading: Bool = false
+    @Published public var uploadErrorMessage: String? = nil
     
     public let mrcFilePath: String?
     
@@ -43,6 +46,7 @@ public class SessionViewModel: ObservableObject {
     private var lastCyclingPowerMeasurementPacket: CyclingPowerMeasurementPacket?
     
     private var currentSessionId: Int64?
+    private var sessionTimestamp: Int64?
     private var metricsTimerTask: Task<Void, Never>?
 
     public var currentBlockZoneColor: Color {
@@ -93,9 +97,14 @@ public class SessionViewModel: ObservableObject {
         self.orchestrator = SessionOrchestrator(bluetoothManager: bluetoothManager)
         
         // Fetch threshold from profile
-        let getProfileUseCase = GetCustomProfileUseCase()
-        if let ftpString = getProfileUseCase.invoke(key: "PROFILE_KEY_FTP") {
-            self.ftp = Double(ftpString) ?? 1.0
+        Task {
+            let getProfileUseCase = GetCustomProfileUseCase()
+            if let ftpString = await getProfileUseCase.invoke(key: Constants.companion.PROFILE_KEY_FTP) {
+                await MainActor.run {
+                    self.ftp = Double(ftpString) ?? 1.0
+                    print("Set SessionViewModel FTP: \(self.ftp)")
+                }
+            }
         }
         
         // Listen to orchestrator for connectivity updates (if needed, or map initial state)
@@ -203,11 +212,7 @@ public class SessionViewModel: ObservableObject {
             // Formula: (PowerPercentage/100) * IntensityFactor * FTP
             let averagePowerPercentage = (currentBlock.targetStartPower + currentBlock.targetEndPower) / 2.0
             
-            let getProfileUseCase = GetCustomProfileUseCase()
-            let ftpString = getProfileUseCase.invoke(key: "PROFILE_KEY_FTP")
-            let ftp = Double(ftpString ?? "") ?? 1.0
-            
-            let targetPower = Int((averagePowerPercentage / 100.0) * intensityFactor * ftp)
+            let targetPower = Int((averagePowerPercentage / 100.0) * intensityFactor * self.ftp)
             
             self.targetPower = Double(targetPower)
             orchestrator.updateTargetPower(power: targetPower)
@@ -238,11 +243,20 @@ public class SessionViewModel: ObservableObject {
 
         Task {
             // Persist Session
-            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: Int64(Date().timeIntervalSince1970 * 1000), duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionPublished: 0, sessionFilename: "")
-            let sessionId = await UpdateSessionUseCase().invoke(session: session)
-            await MainActor.run {
-                self.currentSessionId = sessionId
+            let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+            let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: timestamp, duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionPublished: 0, sessionFilename: "")
+            
+            do {
+                let sessionId = try await UpdateSessionUseCase().invoke(session: session)
+                await MainActor.run {
+                    self.currentSessionId = sessionId
+                    self.sessionTimestamp = timestamp
+                }
+                print("Session Started: \(sessionId): \(timestamp)")
+            } catch {
+                print("Error updating session: \(error)")
             }
+            
             // Start periodic metrics recording
             startMetricsRecording()
         }
@@ -258,7 +272,6 @@ public class SessionViewModel: ObservableObject {
     }
     
     private func recordMetrics() async {
-        print("Recording session metrics: \(currentSessionId)")
         guard let sessionId = currentSessionId else { return }
         
         let currentPower = power ?? 0
@@ -273,9 +286,15 @@ public class SessionViewModel: ObservableObject {
         speedHistory.append(currentSpeed)
 
         // Collect metrics
-        let entry = libfitness.SessionEntry(id: 0, session: sessionId, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(currentPower), heart: Int64(currentHeartRate), speed: Int64(currentSpeed), cadence: Int64(currentCadence))
-        
-        await UpdateSessionEntryUseCase().invoke(entry: entry)
+        let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+        let entry = libfitness.SessionEntry(id: 0, session: sessionId, timestamp: timestamp, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(currentPower), heart: Int64(currentHeartRate), speed: Int64(currentSpeed), cadence: Int64(currentCadence))
+
+        print("Session Entry: \(sessionId): \(currentPower) \(currentHeartRate)")
+        do {
+            try await UpdateSessionEntryUseCase().invoke(entry: entry)
+        } catch {
+            print("Error recording metrics: \(error)")
+        }
     }
     
     public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double], heartRateValues: [Double], cadenceValues: [Double], speedValues: [Double]) {
@@ -315,7 +334,43 @@ public class SessionViewModel: ObservableObject {
         orchestrator.stopSession()
         state = .idle
     }
-    
+
+    public func onUploadSession() {
+        guard let sessionId = currentSessionId else { return }
+        
+        showSummaryModal = false
+        isUploading = true
+        uploadErrorMessage = nil
+        
+        // Observe upload state
+        uploadService.$publishState
+            .receive(on: RunLoop.main)
+            .sink { [weak self] state in
+                switch state {
+                case .completed:
+                    self?.isUploading = false
+                case .failed(let message):
+                    self?.uploadErrorMessage = message
+                    self?.isUploading = false
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+            
+        Task {
+            do {
+                let timestamp = sessionTimestamp ?? Int64(Date().timeIntervalSince1970 * 1000)
+                try await uploadService.uploadSession(sessionId: sessionId, sessionTimestamp: timestamp)
+            } catch {
+                await MainActor.run {
+                    self.uploadErrorMessage = "Upload error: \(error.localizedDescription)"
+                    self.isUploading = false
+                }
+            }
+        }
+    }
+
     public var formattedBlockProgress: String {
         guard let elapsed = currentBlockElapsedTime, let total = currentBlockTotalTime else {
             return "--:-- / --:--"

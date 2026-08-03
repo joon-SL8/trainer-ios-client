@@ -72,8 +72,8 @@ class RegistrationViewModel: ObservableObject {
             return false
         }
         
-        if password.count <= 8 {
-            validationError = "Password must be more than 8 characters long."
+        if password.count < 8 {
+            validationError = "Password must be at least 8 characters long."
             showValidationError = true
             return false
         }
@@ -88,8 +88,8 @@ class RegistrationViewModel: ObservableObject {
             return false
         }
         
-        guard let ageVal = Int(age), ageVal > 0 else {
-            validationError = "Please enter a valid age."
+        guard let ageVal = Int(age), ageVal >= 18 else {
+            validationError = "You must be 18 years old or older"
             showValidationError = true
             return false
         }

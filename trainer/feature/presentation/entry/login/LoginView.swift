@@ -38,7 +38,9 @@ struct LoginView: View {
                     .cornerRadius(5)
 
                 Button("Login") {
-                    authService.login(username: username, password: password)
+                    Task {
+                        await authService.login(username: username, password: password)
+                    }
                 }
                 .padding()
                 .frame(maxWidth: .infinity)

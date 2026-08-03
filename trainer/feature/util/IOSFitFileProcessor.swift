@@ -17,7 +17,6 @@ public class IOSFitFileProcessor : NSObject, FitProcessor {
         filename: String,
         content: FitContent
     ) -> FileCreateResult {
-
         let filePath = documentsPathString + "/" + filename
 
         let fileEncoder = FITEncoder(version: .V20)
@@ -49,14 +48,16 @@ public class IOSFitFileProcessor : NSObject, FitProcessor {
 
             fileEncoder.write(recordMesg)
         }
-        
+
+        print("File (\(filename)): session message")
         let sessionMesg = FITSessionMesg()
         sessionMesg.setTimestamp(now)
         sessionMesg.setEventType(FITEventTypeStop)
         sessionMesg.setSport(FITSportCycling)
         sessionMesg.setSubSport(FITSubSportIndoorCycling)
         fileEncoder.write(sessionMesg)
-        
+
+        print("File (\(filename)): session message")
         let activityMesg = FITActivityMesg()
         activityMesg.setTimestamp(now)
         activityMesg.setEventType(FITEventTypeStop)
@@ -65,6 +66,8 @@ public class IOSFitFileProcessor : NSObject, FitProcessor {
         fileEncoder.write(activityMesg)
         
         fileEncoder.close()
+
+        print("File Generated \(filePath) - \(filename)")
         return .Success(fileUrl: filename)
     }
 

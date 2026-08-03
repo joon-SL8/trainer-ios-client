@@ -13,6 +13,7 @@ struct SessionSummaryModalView: View {
     let speedValues: [Double]
     let onContinue: () -> Void
     let onExit: () -> Void
+    let onUpload: () -> Void
     
     var body: some View {
         VStack(spacing: 20) {
@@ -41,7 +42,7 @@ struct SessionSummaryModalView: View {
             
             VStack(spacing: 8) {
                 Button(action: {
-                    // TODO: Implement Upload
+                    onUpload()
                 }) {
                     Text("Upload")
                         .font(.headline)

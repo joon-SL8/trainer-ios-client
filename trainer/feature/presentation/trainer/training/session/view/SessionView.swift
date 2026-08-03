@@ -133,6 +133,9 @@ struct SessionView: View {
                 onExit: {
                     viewModel.exitSession()
                     navigationRouter.path.removeLast()
+                },
+                onUpload: {
+                    viewModel.onUploadSession()
                 }
             )
             .onAppear {
@@ -141,6 +144,32 @@ struct SessionView: View {
         }
         .navigationBarHidden(true)
         .statusBar(hidden: true)
+        .overlay(
+            Group {
+                if viewModel.isUploading {
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(2)
+                        Text("Uploading to Strava...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                    .padding(30)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(20)
+                }
+            }
+        )
+        .alert("Upload Error", isPresented: Binding(
+            get: { viewModel.uploadErrorMessage != nil },
+            set: { _ in viewModel.uploadErrorMessage = nil }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.uploadErrorMessage ?? "An unknown error occurred.")
+        }
         .onAppear {
             print("SessionView: Became visible.")
             UIApplication.shared.isIdleTimerDisabled = true
