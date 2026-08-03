@@ -15,6 +15,12 @@ struct CalendarListView: View {
             } else if viewModel.sessions.isEmpty {
                 Text("No sessions for this date")
             } else {
+                if viewModel.needsUpload {
+                    Button("Upload all") {
+                        viewModel.uploadAll()
+                    }
+                    .foregroundColor(.blue)
+                }
                 ForEach(viewModel.sessions, id: \.self) { session in
                     sessionCard(for: session)
                 }

@@ -6,11 +6,16 @@ import libfitness
 class CalendarDetailViewModel: ObservableObject {
     @Published var sessionEntries: [libfitness.SessionEntry] = []
     @Published var isLoading: Bool = false
+    @Published var isUploading: Bool = false
     
     let session: libfitness.Session
     private let getSessionEntryUseCase = GetSessionEntryUseCase()
     private let analysis = libfitness.Analysis()
     
+    var needsUpload: Bool {
+        SessionStatus.status(for: session) != .synced
+    }
+
     private var powerList: [KotlinDouble] {
         sessionEntries.map { KotlinDouble(value: Double($0.power)) }
     }
@@ -28,6 +33,16 @@ class CalendarDetailViewModel: ObservableObject {
     init(session: libfitness.Session) {
         self.session = session
         loadEntries()
+    }
+    
+    func upload() {
+        Task {
+            await MainActor.run { isUploading = true }
+            
+            // TODO: Call processing/upload logic
+            
+            await MainActor.run { isUploading = false }
+        }
     }
     
     func loadEntries() {

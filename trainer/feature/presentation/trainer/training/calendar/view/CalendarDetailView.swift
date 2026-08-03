@@ -46,6 +46,21 @@ struct CalendarDetailView: View {
             }
         }
         .navigationTitle("Session Details")
+        .toolbar {
+            if viewModel.needsUpload {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        viewModel.upload()
+                    }) {
+                        if viewModel.isUploading {
+                            ProgressView()
+                        } else {
+                            Text("Upload")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
