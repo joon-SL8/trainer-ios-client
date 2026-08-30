@@ -61,11 +61,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		2CAD7CD93026A5630020EC05 /* Exceptions for "trainer" folder in "Copy Bundle Resources" phase from "trainer" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 2CD687692ED7C2D800AACE22 /* Resources */;
+			membershipExceptions = (
+				feature/presentation/trainer/training/strava/viewModel/StravaAuthorize.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2CD6876D2ED7C2D800AACE22 /* trainer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				2CF8BF632FCD27AB0008BEB0 /* Exceptions for "trainer" folder in "trainer" target */,
+				2CAD7CD93026A5630020EC05 /* Exceptions for "trainer" folder in "Copy Bundle Resources" phase from "trainer" target */,
 			);
 			path = trainer;
 			sourceTree = "<group>";
@@ -397,13 +408,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = trainer/Info.plist;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
-				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires Bluetooth access to connect to fitness sensors for workout tracking.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app requires Bluetooth access to connect to fitness sensors for workout tracking.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -433,13 +446,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = trainer/Info.plist;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
-				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "We need Bluetooth to connect to your fitness sensors and track your performance.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires Bluetooth access to connect to fitness sensors for workout tracking.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "This app requires Bluetooth access to connect to fitness sensors for workout tracking.";
+				INFOPLIST_KEY_NSDownloadsFolderUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -31,13 +31,19 @@ public class SessionUploadService: ObservableObject {
         // 2. Invoke PackDataRowUseCase
         let packResult = try await PackDataRowUseCase()
             .invoke(sessionId: sessionId, timestampStart: sessionTimestamp, rows: entries)
-        
+            
+        guard let dataReady = packResult as? DataUploadReady else {
+            await MainActor.run { self.publishState = .failed("Data preparation failed.") }
+            throw NSError(domain: "SessionUploadService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Data preparation failed."])
+        }
+
         // 3. Handle upload
         await MainActor.run { self.publishState = .uploading }
-        
+
         // Assuming PublishSessionActivityUseCase handles the actual Strava upload
-        try await PublishSessionActivityUseCase().invoke(filename: "session_\(sessionId).fit") // Assuming filename
-        
+        try await PublishSessionActivityUseCase().invoke(title: "Indoor Cycling", sessionId: sessionId, startTime: sessionTimestamp, duration: Int64(entries.count * 1000), description: "Indoor Cycling Session with Skjline Trainer", filename: dataReady.param.filename
+        )
+
         await MainActor.run { self.publishState = .completed }
     }
 }
