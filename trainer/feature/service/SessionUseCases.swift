@@ -44,7 +44,10 @@ public struct PackDataRowUseCase {
 
 public struct PublishSessionActivityUseCase {
     public init() {}
-    public func invoke(filename: String) async throws {
-        // FIXME: Implement publishing
+    public func invoke(title: String, sessionId: Int64, startTime: Int64, duration: Int64, description: String, filename: String) async throws {
+        let publisher = libfitness.PublishSessionActivityUseCase()
+        Task {
+            try await publisher.invoke(title: title, sessionId: sessionId, startTime: startTime, duration: duration, distance: 0, description: description, fitFilename: filename)
+        }
     }
 }

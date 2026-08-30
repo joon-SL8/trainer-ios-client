@@ -53,7 +53,6 @@ public class SessionOrchestrator: ObservableObject {
                 } else if characteristicUUID == self.bluetoothManager.cscMeasurementCharacteristicUUID {
                     // CSC
                     if let cscData = BluetoothDataParser.parseCSC(from: data) {
-                        print("SessionOrchestrator: Received CSC data from \(sensorId)")
                         self.cscData = cscData
                         self.sensorData[sensorId] = "CSC Data Received"
                     }

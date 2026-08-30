@@ -97,17 +97,15 @@ public class BluetoothManager: NSObject, ObservableObject, CBCentralManagerDeleg
         
         return uuids
     }
-    
+
     // ...
-    
+
     public func writeToFMCP(data: Data, for peripheral: CBPeripheral) {
         guard let service = peripheral.services?.first(where: { $0.uuid == CBUUID(string: "1826") }),
               let characteristic = service.characteristics?.first(where: { $0.uuid == fmcpCharacteristicUUID }) else {
-//            print("BluetoothManager: FMCP characteristic not found for peripheral \(peripheral.name ?? "Unknown")")
             return
         }
-        
-        print("BluetoothManager: Writing to FMCP: \(data.map { String(format: "%02hhx", $0) }.joined())")
+
         peripheral.writeValue(data, for: characteristic, type: .withResponse)
     }
 

@@ -70,6 +70,20 @@ struct ProfileView: View {
                 .cornerRadius(10)
             }
             .padding(.horizontal)
+            
+            NavigationLink(destination: TAndCView()) {
+                HStack {
+                    Image(systemName: "doc.text")
+                    Text("Terms and Agreement")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.green)
+                .cornerRadius(10)
+            }
+            .padding(.horizontal)
 
             Button(action: {
                 showLogoutAlert = true

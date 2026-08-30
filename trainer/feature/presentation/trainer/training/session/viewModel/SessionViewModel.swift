@@ -263,6 +263,7 @@ public class SessionViewModel: ObservableObject {
     }
     
     private func startMetricsRecording() {
+        guard metricsTimerTask == nil else { return }
         metricsTimerTask = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
@@ -290,13 +291,9 @@ public class SessionViewModel: ObservableObject {
         let entry = libfitness.SessionEntry(id: 0, session: sessionId, timestamp: timestamp, name: "", description: "", start: "", duration: Int64(elapsedTime), power: Int64(currentPower), heart: Int64(currentHeartRate), speed: Int64(currentSpeed), cadence: Int64(currentCadence))
 
         print("Session Entry: \(sessionId): \(currentPower) \(currentHeartRate)")
-        do {
-            try await UpdateSessionEntryUseCase().invoke(entry: entry)
-        } catch {
-            print("Error recording metrics: \(error)")
-        }
+        await UpdateSessionEntryUseCase().invoke(entry: entry)
     }
-    
+
     public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double], heartRateValues: [Double], cadenceValues: [Double], speedValues: [Double]) {
         let avgPower = powerHistory.isEmpty ? 0 : powerHistory.reduce(0, +) / Double(powerHistory.count)
         // NP, IF, TSS calculations would be more complex, keeping placeholders for now as per original

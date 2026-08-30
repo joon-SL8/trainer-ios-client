@@ -35,11 +35,53 @@ class StravaAuthenticationViewModel: ObservableObject {
         defaults.set(workoutFile, forKey: "StravaAuth_WorkoutFile")
         defaults.set(sessionId, forKey: "StravaAuth_SessionId")
 
-        let deeplink = "trainer"
-        print("Strava authentication triggered with deeplink: \(deeplink)")
+        print("Strava authentication triggered")
 
-        // Use the updated library method to get the Authorize object with deeplink
-        let stravaAuthorize = Authorize_iosKt.getStravaAuthorize(deeplink: deeplink)
-        try? stravaAuthorize.authenticate()
+        // Use the native Swift StravaAuthorize class
+        let stravaAuthorize = StravaAuthorize()
+        stravaAuthorize.authenticate { [weak self] url, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.isAuthenticating = false
+                    self?.errorMessage = error.localizedDescription
+                } else if let url = url {
+                    // Extract code from URL
+                    if let code = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                        .queryItems?.first(where: { $0.name == "code" })?.value {
+                        print("Authorization code received: \(code)")
+                        self?.resolveCodeToJWT(code: code)
+                    } else {
+                        self?.isAuthenticating = false
+                        self?.errorMessage = "No authorization code found in callback URL."
+                    }
+                } else {
+                    self?.isAuthenticating = false
+                }
+            }
+        }
+    }
+
+    private func resolveCodeToJWT(code: String) {
+        let resolveUseCase = libfitness.AuthorizationResolveCodeUseCase()
+        Task {
+            // Assuming invoke returns a Bool indicating success of JWT resolution/storage
+            let success = try? await resolveUseCase.invoke(code: code)
+            await MainActor.run {
+                self.isAuthenticating = false
+                if (success == true) {
+                    print("Successfully resolved and stored JWT.")
+                    self.router.navigateBack()
+                } else {
+                    self.errorMessage = "Failed to resolve or store the JWT token."
+                }
+            }
+        }
+    }
+
+    private func storeJWT(_ jwt: String) -> Bool {
+        // Hypothetical storage implementation
+        // Replace with actual storage logic (e.g., Keychain)
+        UserDefaults.standard.set(jwt, forKey: "Strava_JWT")
+        return true // Return true if storage was successful
     }
 }

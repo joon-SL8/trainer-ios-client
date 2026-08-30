@@ -68,7 +68,35 @@ public class IOSFitFileProcessor : NSObject, FitProcessor {
         fileEncoder.close()
 
         print("File Generated \(filePath) - \(filename)")
+        copyToDownloads(filename: filename)
         return .Success(fileUrl: filename)
+    }
+
+    private func copyToDownloads(filename: String) {
+        let fileManager = FileManager.default
+        guard let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return
+        }
+        
+        let downloadsDir = documentsDir.appendingPathComponent("Downloads", isDirectory: true)
+        
+        // Create the directory if it doesn't exist
+        try? fileManager.createDirectory(at: downloadsDir, withIntermediateDirectories: true)
+        
+        let sourceURL = documentsDir.appendingPathComponent(filename)
+        let destinationURL = downloadsDir.appendingPathComponent(filename)
+        
+        // Remove if exists
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            try? fileManager.removeItem(at: destinationURL)
+        }
+        
+        do {
+            try fileManager.copyItem(at: sourceURL, to: destinationURL)
+            print("File copied to \(destinationURL.path)")
+        } catch {
+            print("Error copying file to Downloads: \(error)")
+        }
     }
 
     public func loadFitFile(filename: String) -> KotlinByteArray {
