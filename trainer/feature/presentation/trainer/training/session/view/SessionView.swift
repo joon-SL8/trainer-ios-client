@@ -107,7 +107,7 @@ struct SessionView: View {
             }
         }
         .sheet(isPresented: Binding(
-            get: { viewModel.showSummaryModal && !hasShownSummary },
+            get: { viewModel.state == .completed && viewModel.showSummaryModal && !hasShownSummary },
             set: { show in viewModel.showSummaryModal = show }
         ), onDismiss: {
             if !viewModel.showSummaryModal {

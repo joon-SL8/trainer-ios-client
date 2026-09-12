@@ -29,6 +29,7 @@ struct LibraryDetailView: View {
     @State private var connectedSensors: [MockSensor] = []
     @State private var showBluetoothExplanation = false
     @State private var showParsingErrorAlert = false
+    @State private var showSafetyDisclaimer = false
 
     private var isBluetoothUnavailable: Bool {
         bluetoothManager.permissionDenied || bluetoothManager.state == .poweredOff || bluetoothManager.isUnsupported
@@ -57,6 +58,11 @@ struct LibraryDetailView: View {
                 SensorSelectionView(bluetoothManager: bluetoothManager, workout: workoutSelectionViewModel.workout, onComplete: { sensors, workout in
                     self.connectedSensors = sensors
                     self.workoutSelectionViewModel.workout = workout
+                })
+            }
+            .fullScreenCover(isPresented: $showSafetyDisclaimer) {
+                SafetyDisclaimerModal(onConfirm: {
+                    workoutSelectionViewModel.showSensorSelection = true
                 })
             }
             .sheet(isPresented: $showBluetoothExplanation) {
@@ -265,8 +271,7 @@ struct LibraryDetailView: View {
                 let workout = MRCWorkout(from: course)
                 workout.process()
                 workoutSelectionViewModel.workout = workout
-                workoutSelectionViewModel.showSensorSelection = true
-                navigationRouter.navigateBack()
+                showSafetyDisclaimer = true
             }
         }) {
             HStack {

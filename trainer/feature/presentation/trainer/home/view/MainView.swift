@@ -17,6 +17,8 @@ struct MainView: View {
     @StateObject var workoutSelectionViewModel = WorkoutSelectionViewModel()
     @StateObject var randomSessionViewModel = RandomSessionViewModel()
     @StateObject var libraryViewModel = LibraryViewModel()
+    @State private var showTermsOfUseModal = false
+    let tAndCService = TAndCService()
 
     private var isBluetoothUnavailable: Bool {
         if bluetoothManager.isMocking { return false }
@@ -57,6 +59,7 @@ struct MainView: View {
                     connectedSensors: $connectedSensors,
                     denialCount: $denialCount,
                     showWorkoutSelectionModal: $showWorkoutSelectionModal,
+                    showTermsOfUseModal: $showTermsOfUseModal,
                     workoutSelectionViewModel: workoutSelectionViewModel
                 ))
                 .onChange(of: showProfile) { newValue in
@@ -209,6 +212,15 @@ struct MainView: View {
             handleDeeplink(target)
         }
         
+        Task {
+            let status = await tAndCService.getStatus(type: .termsOfUse)
+            if !(status?.isAgreed ?? false) {
+                await MainActor.run {
+                    showTermsOfUseModal = true
+                }
+            }
+        }
+        
         // Allow some time for BluetoothManager to initialize CBCentralManager and update state
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if bluetoothManager.isUnsupported && !hasShownUnsupportedHardwareModal {
@@ -234,10 +246,14 @@ struct MainViewSheetsAndCovers: ViewModifier {
     @Binding var connectedSensors: [MockSensor]
     @Binding var denialCount: Int
     @Binding var showWorkoutSelectionModal: Bool
+    @Binding var showTermsOfUseModal: Bool
     @ObservedObject var workoutSelectionViewModel: WorkoutSelectionViewModel
 
     func body(content: Content) -> some View {
         content
+            .fullScreenCover(isPresented: $showTermsOfUseModal) {
+                TermsOfUseModal(isPresented: $showTermsOfUseModal)
+            }
             .sheet(isPresented: $showMenu) {
                 ProfileView(showProfile: $showProfile)
                     .environmentObject(navigationRouter)
