@@ -131,6 +131,7 @@ public class SessionOrchestrator: ObservableObject {
     public func stopSession() {
         sessionState = "Idle"
         timer.request(action: Stop.shared)
+        lastTargetPower = -1
         updateTargetPower(power: 0)
         sendFMCPCommand(PowerControlCommands.getStopCommand())
     }

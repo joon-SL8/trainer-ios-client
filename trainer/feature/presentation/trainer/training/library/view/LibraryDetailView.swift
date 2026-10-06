@@ -29,7 +29,6 @@ struct LibraryDetailView: View {
     @State private var connectedSensors: [MockSensor] = []
     @State private var showBluetoothExplanation = false
     @State private var showParsingErrorAlert = false
-    @State private var showSafetyDisclaimer = false
 
     private var isBluetoothUnavailable: Bool {
         bluetoothManager.permissionDenied || bluetoothManager.state == .poweredOff || bluetoothManager.isUnsupported
@@ -48,6 +47,7 @@ struct LibraryDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .fullScreenCover(isPresented: $showSensorSelection, onDismiss: {
+                workoutSelectionViewModel.reset()
                 if !connectedSensors.isEmpty {
                     if let workout = workoutSelectionViewModel.workout {
                         navigationRouter.path.append(WorkoutSessionRoute(sensors: connectedSensors, workout: workout))
@@ -58,11 +58,6 @@ struct LibraryDetailView: View {
                 SensorSelectionView(bluetoothManager: bluetoothManager, workout: workoutSelectionViewModel.workout, onComplete: { sensors, workout in
                     self.connectedSensors = sensors
                     self.workoutSelectionViewModel.workout = workout
-                })
-            }
-            .fullScreenCover(isPresented: $showSafetyDisclaimer) {
-                SafetyDisclaimerModal(onConfirm: {
-                    workoutSelectionViewModel.showSensorSelection = true
                 })
             }
             .sheet(isPresented: $showBluetoothExplanation) {
@@ -161,12 +156,7 @@ struct LibraryDetailView: View {
 
     @ViewBuilder
     private func courseContent(_ course: MrcCourse) -> some View {
-        let workout = self.workout ?? viewModel.workout ?? {
-            let w = MRCWorkout(from: course)
-            w.process()
-            return w
-        }()
-        
+        let workout = self.workout ?? viewModel.workout ?? MRCWorkout(from: course)
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection(course)
@@ -244,7 +234,7 @@ struct LibraryDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Intervals")
                 .font(.headline)
-            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, ftp: viewModel.ftp, isStatic: true)
+            MRCBlockListView(blocks: workout.blocks, elapsedTime: 0, ftp: viewModel.ftp, intensityFactor: 1.0, isStatic: true)
                 .frame(height: 200)
         }
     }
@@ -268,10 +258,10 @@ struct LibraryDetailView: View {
                 showBluetoothExplanation = true
             } else {
                 bluetoothManager.requestPermission()
-                let workout = MRCWorkout(from: course)
-                workout.process()
+                // Use the pre-processed workout from the view model
+                let workout = self.workout ?? viewModel.workout ?? MRCWorkout(from: course)
                 workoutSelectionViewModel.workout = workout
-                showSafetyDisclaimer = true
+                showSensorSelection = true
             }
         }) {
             HStack {

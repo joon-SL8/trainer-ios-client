@@ -61,6 +61,7 @@ public class SessionViewModel: ObservableObject {
     }
     
     @Published public var ftp: Double = 1.0
+    @Published public var shouldExit: Bool = false
     
     @Published public var isPedaling: Bool = false
     private var lowPowerStartTime: Date?
@@ -71,7 +72,7 @@ public class SessionViewModel: ObservableObject {
     private var powerMatchStartTime: Date?
     private var pauseStartTime: Date?
     private let matchDuration: TimeInterval = 3.0
-    private let pauseDuration: TimeInterval = 5.0
+    private let pauseDuration: TimeInterval = 10.0 // 10 seconds for power level 0 auto-pause
     private let powerTolerance: Double = 5.0 // +/- 5 Watts
 
     private func monitorPedalingForModal() {
@@ -243,7 +244,7 @@ public class SessionViewModel: ObservableObject {
 
         Task {
             // Persist Session
-            let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+            let timestamp = Int64(Date().timeIntervalSince1970 * 100)
             let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: timestamp, duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionPublished: 0, sessionFilename: "")
             
             do {
@@ -295,9 +296,10 @@ public class SessionViewModel: ObservableObject {
     }
 
     public func calculateSessionMetrics() -> (avgPower: Double, np: Double, ifFactor: Double, tss: Double, powerValues: [Double], heartRateValues: [Double], cadenceValues: [Double], speedValues: [Double]) {
-        let avgPower = powerHistory.isEmpty ? 0 : powerHistory.reduce(0, +) / Double(powerHistory.count)
+        let scaledPowerHistory = powerHistory.map { $0 * intensityFactor }
+        let avgPower = scaledPowerHistory.isEmpty ? 0 : scaledPowerHistory.reduce(0, +) / Double(scaledPowerHistory.count)
         // NP, IF, TSS calculations would be more complex, keeping placeholders for now as per original
-        return (avgPower, 180.0, 0.75, 45.0, powerHistory, heartRateHistory, cadenceHistory, speedHistory)
+        return (avgPower, 180.0 * intensityFactor, 0.75 * intensityFactor, 45.0 * intensityFactor, scaledPowerHistory, heartRateHistory, cadenceHistory, speedHistory)
     }
     
     public func requestControl() {
@@ -346,6 +348,8 @@ public class SessionViewModel: ObservableObject {
                 switch state {
                 case .completed:
                     self?.isUploading = false
+                    self?.exitSession()
+                    self?.shouldExit = true
                 case .failed(let message):
                     self?.uploadErrorMessage = message
                     self?.isUploading = false

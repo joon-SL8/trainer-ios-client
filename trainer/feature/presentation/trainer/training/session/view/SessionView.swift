@@ -7,6 +7,7 @@ struct SessionView: View {
     @StateObject private var viewModel: SessionViewModel
     @State private var showFileError = false
     @State private var hasShownSummary: Bool = false
+    @State private var showSessionBeginWarning = true
     let workoutFile: String?
     
     init(sensors: [MockSensor] = [], course: MrcCourse? = nil, workoutFile: String? = nil, workout: MRCWorkout? = nil, bluetoothManager: BluetoothManager) {
@@ -44,7 +45,8 @@ struct SessionView: View {
                         MRCBlockListView(
                             blocks: viewModel.workout?.blocks ?? [],
                             elapsedTime: viewModel.elapsedTime,
-                            ftp: viewModel.ftp
+                            ftp: viewModel.ftp,
+                            intensityFactor: viewModel.intensityFactor
                         )
                         .frame(width: max(0, mainContentWidth * 0.35))
                         
@@ -66,18 +68,33 @@ struct SessionView: View {
                             
                             Spacer()
                             
-                            // Exit Button
-                            Button(action: {
-                                viewModel.exitSession()
-                                navigationRouter.path.removeLast()
-                            }) {
-                                Text("Exit")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal, 32)
-                                    .background(Color.red)
-                                    .cornerRadius(10)
+                            // Complete Button when paused, or Exit Button otherwise
+                            if viewModel.state == .paused {
+                                Button(action: {
+                                    viewModel.completeSession()
+                                }) {
+                                    Text("Complete")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .frame(width: 141, height: 141)
+                                        .background(Color.green)
+                                        .cornerRadius(10)
+                                }
+                                .accessibilityIdentifier("completeSessionButton")
+                                .offset(y: -48.5)
+                            } else {
+                                Button(action: {
+                                    viewModel.exitSession()
+                                    navigationRouter.path.removeLast()
+                                }) {
+                                    Text("Exit")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .frame(width: 141, height: 141)
+                                        .background(Color.red)
+                                        .cornerRadius(10)
+                                }
+                                .offset(y: -48.5)
                             }
                             
                             Spacer()
@@ -172,8 +189,17 @@ struct SessionView: View {
         }
         .onAppear {
             print("SessionView: Became visible.")
-            UIApplication.shared.isIdleTimerDisabled = true
-            loadWorkout()
+        }
+        .fullScreenCover(isPresented: $showSessionBeginWarning, onDismiss: {
+            if viewModel.workout == nil && !showSessionBeginWarning {
+                navigationRouter.path.removeLast()
+            }
+        }) {
+            SessionBeginWarningModal(onConfirm: {
+                showSessionBeginWarning = false
+                UIApplication.shared.isIdleTimerDisabled = true
+                loadWorkout()
+            })
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
@@ -184,6 +210,11 @@ struct SessionView: View {
             }
         } message: {
             Text("The requested workout file '\(workoutFile ?? "")' could not be found.")
+        }
+        .onChange(of: viewModel.shouldExit) { shouldExit in
+            if shouldExit {
+                navigationRouter.path.removeLast()
+            }
         }
     }
     

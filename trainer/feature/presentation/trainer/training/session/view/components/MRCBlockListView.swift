@@ -4,6 +4,7 @@ struct MRCBlockListView: View {
     let blocks: [MRCBlock]
     let elapsedTime: TimeInterval
     let ftp: Double
+    let intensityFactor: Double
     var isStatic: Bool = false
     
     var body: some View {
@@ -12,7 +13,7 @@ struct MRCBlockListView: View {
                 VStack(spacing: 8) {
                     ForEach(blocks) { block in
                         let averagePower = (block.targetStartPower + block.targetEndPower) / 2.0
-                        let scaledTargetPower = (averagePower / 100.0) * ftp
+                        let scaledTargetPower = (averagePower / 100.0) * ftp * intensityFactor
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(formatDuration(block.endTime - block.startTime))")
@@ -31,13 +32,13 @@ struct MRCBlockListView: View {
                         .padding(.vertical, 10)
                         .padding(.horizontal, 12)
                         .background(
-                            PowerZoneDefinition.zone(forPowerPercentage: Int(averagePower)).swiftColor
+                            PowerZoneDefinition.zone(forPowerPercentage: Int(averagePower * intensityFactor)).swiftColor
                                 .opacity((!isStatic && isCurrent(block)) ? 0.35 : ((!isStatic && isCompleted(block)) ? 0.05 : 0.15))
                         )
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke((!isStatic && isCurrent(block)) ? PowerZoneDefinition.zone(forPowerPercentage: Int(averagePower)).swiftColor.opacity(0.8) : Color.clear, lineWidth: 2)
+                                .stroke((!isStatic && isCurrent(block)) ? PowerZoneDefinition.zone(forPowerPercentage: Int(averagePower * intensityFactor)).swiftColor.opacity(0.8) : Color.clear, lineWidth: 2)
                         )
                         .id(block.id)
                     }

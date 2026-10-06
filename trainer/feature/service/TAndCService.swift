@@ -8,13 +8,7 @@ public struct TAndCService {
     // It also has static or companion access.
     public func getStatus(type: libfitness.TAndC) async -> libfitness.TAndCAgreement? {
         let usecase = libfitness.GetTAndCStatusUseCase()
-
-        do {
-            return try usecase.invoke(type: type)
-        } catch {
-            print("Error getting T&C status: \(error)")
-            return nil
-        }
+        return usecase.invoke(type: type)
     }
 
     public func update(type: libfitness.TAndC, isAgreed: Bool) async {
@@ -40,8 +34,37 @@ public struct TAndCService {
             privacyContactEmail: AppConstants.Legal.privacyContactEmail
         )
 
-        // Use the constant for terms of use
-        let template = libfitness.TAndC.companion.TERMS_OF_USE
-        return libfitness.TAndCKt.replaceTAndCPlaceholders(template, config: config)
+        let template: String
+        if type == .safetyDisclaimer {
+            template = libfitness.SafetyDisclaimer.companion.SAFETY_DISCLAIMER
+        } else if type == .privacyPolicy {
+            template = libfitness.PrivacyPolicy.companion.PRIVACY_POLICY
+        } else {
+            template = libfitness.TermsOfUse.companion.TERMS_OF_USE
+        }
+        let content = libfitness.TAndCKt.replaceTAndCPlaceholders(template, config: config)
+        print("TAndCService getContent for type \(type): length = \(content.count), preview = \(content.prefix(100))")
+        print("\(template)")
+        return content
+    }
+
+    public func getSessionBeginWarningContent() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = AppConstants.DateFormats.standard
+        let dateString = formatter.string(from: Date())
+        
+        let config = libfitness.TAndCConfiguration.init(
+            appName: AppConstants.Legal.appName,
+            effectiveDate: dateString,
+            lastUpdated: dateString,
+            legalContactEmail: AppConstants.Legal.legalContactEmail,
+            websiteUrl: AppConstants.Legal.websiteUrl,
+            privacyContactEmail: AppConstants.Legal.privacyContactEmail
+        )
+
+        let template = libfitness.SessionBeginWarning.companion.SESSION_BEGIN_WARNING
+        let content = libfitness.TAndCKt.replaceTAndCPlaceholders(template, config: config)
+        print("TAndCService getSessionBeginWarningContent: length = \(content.count)")
+        return content
     }
 }

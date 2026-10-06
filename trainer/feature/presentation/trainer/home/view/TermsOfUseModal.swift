@@ -1,5 +1,38 @@
 import SwiftUI
+import WebKit
 import libfitness
+
+struct HTMLWebView: UIViewRepresentable {
+    let htmlContent: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let styledHTML = """
+        <html>
+        <head>
+        <style>
+            body { font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 13pt; color: #333; padding: 10px; background-color: transparent; }
+            h1, h2, h3 { color: #111; }
+            @media (prefers-color-scheme: dark) {
+                body { color: #f0f0f0; }
+                h1, h2, h3 { color: #ffffff; }
+            }
+        </style>
+        </head>
+        <body>
+        \(htmlContent)
+        </body>
+        </html>
+        """
+        webView.loadHTMLString(styledHTML, baseURL: nil)
+    }
+}
 
 struct TermsOfUseContentView: View {
     let service = TAndCService()
@@ -7,15 +40,13 @@ struct TermsOfUseContentView: View {
     @State private var content: String = "Loading..."
     
     var body: some View {
-        ScrollView {
-            Text(content)
-                .padding()
-        }
-        .frame(maxHeight: .infinity)
-        .border(Color.gray)
-        .onAppear {
-            content = service.getContent(type: type)
-        }
+        HTMLWebView(htmlContent: content)
+            .frame(maxHeight: .infinity)
+            .border(Color.gray)
+            .onAppear {
+                let rawContent = service.getContent(type: type)
+                content = rawContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Content not available." : rawContent
+            }
     }
 }
 
@@ -29,40 +60,8 @@ struct TermsOfUseView: View {
 
 struct TermsOfUseModal: View {
     @Binding var isPresented: Bool
-    let service = TAndCService()
-    @State private var hasAgreed = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Terms of Use")
-                .font(.title)
-                .bold()
-            
-            TermsOfUseContentView(type: .termsOfUse)
-            
-            Toggle(isOn: $hasAgreed) {
-                Text("I agree")
-            }
-            .padding()
-            
-            HStack(spacing: 20) {
-                Button("Cancel") {
-                    exit(0)
-                }
-                .foregroundColor(.red)
-                
-                Button("OK") {
-                    Task {
-                        await service.update(type: .termsOfUse, isAgreed: true)
-                        isPresented = false
-                    }
-                }
-                .disabled(!hasAgreed)
-                .buttonStyle(.borderedProminent)
-            }
-            .padding()
-        }
-        .padding()
-        .interactiveDismissDisabled()
+        LegalAgreementModal(isPresented: $isPresented, type: .termsOfUse, title: "Terms of Use")
     }
 }

@@ -20,14 +20,11 @@ struct TAndCView: View {
     
     var body: some View {
         List(types, id: \.self) { type in
-            if type == .termsOfUse {
-                NavigationLink(destination: TermsOfUseView()) {
-                    rowContent(for: type)
-                }
-            } else {
+            NavigationLink(destination: TermsOfUseContentView(type: type).navigationTitle(getName(for: type)).padding()) {
                 rowContent(for: type)
             }
         }
+        .navigationTitle("Terms and Agreements")
         .onAppear(perform: {
             Task {
                 await loadStatuses()
