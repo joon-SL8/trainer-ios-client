@@ -1,4 +1,5 @@
 import SwiftUI
+import MessageUI
 import libfitness
 
 struct CalendarDetailView: View {
@@ -47,8 +48,19 @@ struct CalendarDetailView: View {
         }
         .navigationTitle("Session Details")
         .toolbar {
-            if viewModel.needsUpload {
-                ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: {
+                    viewModel.emailFitFile()
+                }) {
+                    if viewModel.isEmailing {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "envelope")
+                    }
+                }
+                .accessibilityLabel("Email FIT File")
+
+                if viewModel.needsUpload {
                     Button(action: {
                         viewModel.upload()
                     }) {
@@ -60,6 +72,36 @@ struct CalendarDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $viewModel.showMailComposer) {
+            if let data = viewModel.mailAttachmentData {
+                MailComposeView(
+                    subject: "Workout FIT File: \(viewModel.session.name)",
+                    body: "Attached is the FIT file for my indoor cycling session (\(viewModel.session.name)).",
+                    attachmentData: data,
+                    attachmentFilename: viewModel.mailAttachmentFilename
+                ) { result in
+                    switch result {
+                    case .success(let mailResult):
+                        print("Mail result: \(mailResult.rawValue)")
+                    case .failure(let error):
+                        print("Mail error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $viewModel.showActivityView) {
+            if let url = viewModel.fitFileURLForSharing {
+                ActivityView(activityItems: [url])
+            }
+        }
+        .alert("Email Error", isPresented: Binding(
+            get: { viewModel.emailError != nil },
+            set: { _ in viewModel.emailError = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.emailError ?? "Unknown error")
         }
     }
 }

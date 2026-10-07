@@ -17,6 +17,9 @@ struct MainView: View {
     @StateObject var workoutSelectionViewModel = WorkoutSelectionViewModel()
     @StateObject var randomSessionViewModel = RandomSessionViewModel()
     @StateObject var libraryViewModel = LibraryViewModel()
+    @State private var showTermsOfUseModal = false
+    @State private var showSafetyDisclaimerModal = false
+    let tAndCService = TAndCService()
 
     private var isBluetoothUnavailable: Bool {
         if bluetoothManager.isMocking { return false }
@@ -57,12 +60,26 @@ struct MainView: View {
                     connectedSensors: $connectedSensors,
                     denialCount: $denialCount,
                     showWorkoutSelectionModal: $showWorkoutSelectionModal,
+                    showTermsOfUseModal: $showTermsOfUseModal,
+                    showSafetyDisclaimerModal: $showSafetyDisclaimerModal,
                     workoutSelectionViewModel: workoutSelectionViewModel
                 ))
                 .onChange(of: showProfile) { newValue in
                     if newValue {
                         navigationRouter.path.append("profile")
                         showProfile = false // Reset for next time
+                    }
+                }
+                .onChange(of: showTermsOfUseModal) { newValue in
+                    if !newValue {
+                        Task {
+                            let safetyStatus = await tAndCService.getStatus(type: .safetyDisclaimer)
+                            if !(safetyStatus?.isAgreed ?? false) {
+                                await MainActor.run {
+                                    showSafetyDisclaimerModal = true
+                                }
+                            }
+                        }
                     }
                 }
                 .onChange(of: activeDeeplink) { newValue in
@@ -209,6 +226,22 @@ struct MainView: View {
             handleDeeplink(target)
         }
         
+        Task {
+            let termsStatus = await tAndCService.getStatus(type: .termsOfUse)
+            if !(termsStatus?.isAgreed ?? false) {
+                await MainActor.run {
+                    showTermsOfUseModal = true
+                }
+            } else {
+                let safetyStatus = await tAndCService.getStatus(type: .safetyDisclaimer)
+                if !(safetyStatus?.isAgreed ?? false) {
+                    await MainActor.run {
+                        showSafetyDisclaimerModal = true
+                    }
+                }
+            }
+        }
+        
         // Allow some time for BluetoothManager to initialize CBCentralManager and update state
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             if bluetoothManager.isUnsupported && !hasShownUnsupportedHardwareModal {
@@ -234,10 +267,18 @@ struct MainViewSheetsAndCovers: ViewModifier {
     @Binding var connectedSensors: [MockSensor]
     @Binding var denialCount: Int
     @Binding var showWorkoutSelectionModal: Bool
+    @Binding var showTermsOfUseModal: Bool
+    @Binding var showSafetyDisclaimerModal: Bool
     @ObservedObject var workoutSelectionViewModel: WorkoutSelectionViewModel
 
     func body(content: Content) -> some View {
         content
+            .fullScreenCover(isPresented: $showTermsOfUseModal) {
+                TermsOfUseModal(isPresented: $showTermsOfUseModal)
+            }
+            .fullScreenCover(isPresented: $showSafetyDisclaimerModal) {
+                SafetyDisclaimerAgreementModal(isPresented: $showSafetyDisclaimerModal)
+            }
             .sheet(isPresented: $showMenu) {
                 ProfileView(showProfile: $showProfile)
                     .environmentObject(navigationRouter)

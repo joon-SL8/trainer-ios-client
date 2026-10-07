@@ -16,15 +16,15 @@ struct mobileApp: App {
     init() {
         let fitProcessor = IOSFitFileProcessor()
         InitializerKt.initializeApp(processor: fitProcessor, launcher: DefaultLauncher())
-        
+
         // Bypass splash screen during UI testing
         let args = ProcessInfo.processInfo.arguments
         _showSplash = State(initialValue: !args.contains("--uitesting"))
-        
+
         if args.contains("--clear-defaults") {
             UserDefaults.standard.removeObject(forKey: "hasShownUnsupportedHardwareModal")
         }
-        
+
         // Handle internal deeplink for UI testing if provided
         if let deeplinkIndex = args.firstIndex(of: "--deeplink"), deeplinkIndex + 1 < args.count {
             let urlString = args[deeplinkIndex + 1]

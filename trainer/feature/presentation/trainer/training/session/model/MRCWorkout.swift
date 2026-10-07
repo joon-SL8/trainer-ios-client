@@ -57,13 +57,15 @@ public class MRCWorkout: Identifiable, Equatable {
         for i in stride(from: 0, to: courseData.count, by: 2) {
             guard let pair1 = courseData[i] as? KotlinPair<KotlinFloat, KotlinFloat>,
                   let pair2 = courseData[i+1] as? KotlinPair<KotlinFloat, KotlinFloat> else { continue }
-            
+
+            print("DEBUG: pair1.first (Power/Time?): \(pair1.first?.floatValue ?? 0.0), pair1.second (Time/Power?): \(pair1.second?.floatValue ?? 0.0)")
+
             let startTime = Double(pair1.first?.floatValue ?? 0.0)
             let startPower = Double(pair1.second?.floatValue ?? 0.0)
-            
+
             let endTime = Double(pair2.first?.floatValue ?? 0.0)
             let endPower = Double(pair2.second?.floatValue ?? 0.0)
-            
+            print("[\(startTime): \(startPower)]-[\(endTime): \(endPower)]")
             calculatedBlocks.append(MRCBlock(
                 startTime: startTime,
                 endTime: endTime,

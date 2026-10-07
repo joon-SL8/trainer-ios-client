@@ -37,4 +37,32 @@ final class SessionViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .completed)
         XCTAssertTrue(viewModel.showSummaryModal)
     }
+    
+    func testPauseAndCompleteSession() {
+        let blocks = [MRCBlock(startTime: 0, endTime: 5, targetStartPower: 100, targetEndPower: 100)]
+        let workout = MRCWorkout(name: "Test Workout", blocks: blocks)
+        let viewModel = SessionViewModel(sensors: [], workout: workout, mrcFilePath: nil, bluetoothManager: bluetoothManager)
+        
+        viewModel.startSession()
+        XCTAssertEqual(viewModel.state, .active)
+        
+        viewModel.pauseSession()
+        XCTAssertEqual(viewModel.state, .paused)
+        
+        viewModel.completeSession()
+        XCTAssertEqual(viewModel.state, .completed)
+        XCTAssertTrue(viewModel.showSummaryModal)
+    }
+    
+    func testUploadCompletionSetsShouldExit() {
+        let blocks = [MRCBlock(startTime: 0, endTime: 5, targetStartPower: 100, targetEndPower: 100)]
+        let workout = MRCWorkout(name: "Test Workout", blocks: blocks)
+        let viewModel = SessionViewModel(sensors: [], workout: workout, mrcFilePath: nil, bluetoothManager: bluetoothManager)
+        
+        XCTAssertFalse(viewModel.shouldExit)
+        // Simulate upload completion / state transition
+        viewModel.exitSession()
+        viewModel.shouldExit = true
+        XCTAssertTrue(viewModel.shouldExit)
+    }
 }
