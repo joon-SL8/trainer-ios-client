@@ -1,4 +1,5 @@
 import SwiftUI
+import MessageUI
 import libfitness
 
 struct SessionView: View {
@@ -153,11 +154,44 @@ struct SessionView: View {
                 },
                 onUpload: {
                     viewModel.onUploadSession()
+                },
+                onEmailFit: {
+                    viewModel.emailFitFile()
                 }
             )
             .onAppear {
                 viewModel.pauseTimerObservation()
             }
+        }
+        .sheet(isPresented: $viewModel.showMailComposer) {
+            if let data = viewModel.mailAttachmentData {
+                MailComposeView(
+                    subject: "Workout FIT File",
+                    body: "Attached is the FIT file for my indoor cycling session.",
+                    attachmentData: data,
+                    attachmentFilename: viewModel.mailAttachmentFilename
+                ) { result in
+                    switch result {
+                    case .success(let mailResult):
+                        print("Mail result: \(mailResult)")
+                    case .failure(let error):
+                        print("Mail error: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $viewModel.showActivityView) {
+            if let url = viewModel.fitFileURLForSharing {
+                ActivityView(activityItems: [url])
+            }
+        }
+        .alert("Email Error", isPresented: Binding(
+            get: { viewModel.emailError != nil },
+            set: { _ in viewModel.emailError = nil }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.emailError ?? "Unknown error")
         }
         .navigationBarHidden(true)
         .statusBar(hidden: true)

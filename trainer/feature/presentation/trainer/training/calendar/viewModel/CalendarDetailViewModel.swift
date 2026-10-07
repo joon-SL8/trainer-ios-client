@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MessageUI
 import libfitness
 
 @MainActor
@@ -7,6 +8,13 @@ class CalendarDetailViewModel: ObservableObject {
     @Published var sessionEntries: [libfitness.SessionEntry] = []
     @Published var isLoading: Bool = false
     @Published var isUploading: Bool = false
+    @Published var isEmailing: Bool = false
+    @Published var emailError: String? = nil
+    @Published var showMailComposer: Bool = false
+    @Published var showActivityView: Bool = false
+    @Published var mailAttachmentData: Data? = nil
+    @Published var mailAttachmentFilename: String = "workout.fit"
+    @Published var fitFileURLForSharing: URL? = nil
     
     let session: libfitness.Session
     private let getSessionEntryUseCase = GetSessionEntryUseCase()
@@ -47,6 +55,35 @@ class CalendarDetailViewModel: ObservableObject {
                 // Handle error
                 print("Error uploading session: \(error)")
                 await MainActor.run { isUploading = false }
+            }
+        }
+    }
+    
+    func emailFitFile() {
+        Task {
+            await MainActor.run { isEmailing = true }
+            do {
+                let url = try await SessionUploadService.getOrCreateFitFile(sessionId: session.id, sessionTimestamp: session.sessionDate)
+                let data = try Data(contentsOf: url)
+                let filename = url.lastPathComponent
+                
+                await MainActor.run {
+                    self.mailAttachmentData = data
+                    self.mailAttachmentFilename = filename
+                    self.fitFileURLForSharing = url
+                    self.isEmailing = false
+                    
+                    if MFMailComposeViewController.canSendMail() {
+                        self.showMailComposer = true
+                    } else {
+                        self.showActivityView = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.emailError = error.localizedDescription
+                    self.isEmailing = false
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import MessageUI
 import libfitness
 
 public class SessionViewModel: ObservableObject {
@@ -39,6 +40,13 @@ public class SessionViewModel: ObservableObject {
     @Published public var showSummaryModal: Bool = false
     @Published public var isUploading: Bool = false
     @Published public var uploadErrorMessage: String? = nil
+    @Published public var isEmailing: Bool = false
+    @Published public var emailError: String? = nil
+    @Published public var showMailComposer: Bool = false
+    @Published public var showActivityView: Bool = false
+    @Published public var mailAttachmentData: Data? = nil
+    @Published public var mailAttachmentFilename: String = "workout.fit"
+    @Published public var fitFileURLForSharing: URL? = nil
     
     public let mrcFilePath: String?
     
@@ -244,7 +252,7 @@ public class SessionViewModel: ObservableObject {
 
         Task {
             // Persist Session
-            let timestamp = Int64(Date().timeIntervalSince1970 * 100)
+            let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
             let session = libfitness.Session(id: 0, name: workout.name, description: "", sessionDate: timestamp, duration: Int64(workout.blocks.last?.endTime ?? 0.0), mrcFilename: "", mrcFilepath: mrcFilePath ?? "", sessionPublished: 0, sessionFilename: "")
             
             do {
@@ -367,6 +375,37 @@ public class SessionViewModel: ObservableObject {
                 await MainActor.run {
                     self.uploadErrorMessage = "Upload error: \(error.localizedDescription)"
                     self.isUploading = false
+                }
+            }
+        }
+    }
+
+    public func emailFitFile() {
+        guard let sessionId = currentSessionId else { return }
+        Task {
+            await MainActor.run { isEmailing = true }
+            do {
+                let timestamp = sessionTimestamp ?? Int64(Date().timeIntervalSince1970 * 1000)
+                let url = try await SessionUploadService.getOrCreateFitFile(sessionId: sessionId, sessionTimestamp: timestamp)
+                let data = try Data(contentsOf: url)
+                let filename = url.lastPathComponent
+                
+                await MainActor.run {
+                    self.mailAttachmentData = data
+                    self.mailAttachmentFilename = filename
+                    self.fitFileURLForSharing = url
+                    self.isEmailing = false
+                    
+                    if MFMailComposeViewController.canSendMail() {
+                        self.showMailComposer = true
+                    } else {
+                        self.showActivityView = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.emailError = error.localizedDescription
+                    self.isEmailing = false
                 }
             }
         }
